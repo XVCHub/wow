@@ -133,70 +133,81 @@ function getFreecamPage() {
     }
     body {
       font-family: 'Consolas', 'Courier New', monospace;
-      background: #1e1e1e;
-      color: #d4d4d4;
-      padding: 20px;
-    }
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      background: #252526;
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+      background: #0d1117;
+      color: #c9d1d9;
+      min-height: 100vh;
     }
     .header {
-      background: #2d2d30;
-      padding: 20px 30px;
-      border-bottom: 2px solid #007acc;
+      background: #161b22;
+      padding: 20px;
+      border-bottom: 1px solid #30363d;
     }
-    h1 {
-      color: #4ec9b0;
-      margin-bottom: 10px;
+    .header h1 {
+      color: #58a6ff;
+      font-size: 1.5em;
+      font-weight: 600;
     }
-    .code-container {
-      position: relative;
+    .toolbar {
+      background: #0d1117;
+      padding: 12px 20px;
+      border-bottom: 1px solid #21262d;
+      display: flex;
+      justify-content: flex-end;
     }
     .copy-btn {
-      position: absolute;
-      top: 15px;
-      right: 15px;
-      background: #007acc;
+      background: #238636;
       color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 5px;
+      border: 1px solid #2ea043;
+      padding: 8px 16px;
+      border-radius: 6px;
       cursor: pointer;
-      z-index: 10;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background 0.2s;
     }
     .copy-btn:hover {
-      background: #005a9e;
+      background: #2ea043;
     }
     .copy-btn.copied {
-      background: #10b981;
+      background: #1f6feb;
+      border-color: #1f6feb;
+    }
+    .code-container {
+      padding: 0;
+      overflow-x: auto;
     }
     pre {
       margin: 0;
-      padding: 60px 30px 30px;
-      overflow-x: auto;
-      font-size: 0.9em;
+      padding: 20px;
+      background: #0d1117;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #c9d1d9;
+    }
+    code {
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     }
     .back-link {
       display: inline-block;
-      margin: 20px 30px;
-      color: #4fc3f7;
+      margin: 20px;
+      color: #58a6ff;
       text-decoration: none;
+      font-size: 14px;
+    }
+    .back-link:hover {
+      text-decoration: underline;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>Roblox FreeCam Script</h1>
-    </div>
-    <div class="code-container">
-      <button class="copy-btn" onclick="copyCode()">Copy Script</button>
-      <pre><code id="code">local FreeCam = {}
+  <div class="header">
+    <h1>FreeCam.lua</h1>
+  </div>
+  <div class="toolbar">
+    <button class="copy-btn" onclick="copyCode()">Copy</button>
+  </div>
+  <div class="code-container">
+    <pre><code id="code">local FreeCam = {}
 FreeCam.Enabled = false
 
 local PI = math.pi
@@ -418,9 +429,8 @@ function FreeCam:Disable()
 end
 
 return FreeCam</code></pre>
-    </div>
-    <a href="/" class="back-link">Back to home</a>
   </div>
+  <a href="/" class="back-link">← Back to home</a>
   <script>
     function copyCode() {
       const code = document.getElementById('code').textContent;
@@ -429,7 +439,7 @@ return FreeCam</code></pre>
         btn.textContent = 'Copied!';
         btn.classList.add('copied');
         setTimeout(() => {
-          btn.textContent = 'Copy Script';
+          btn.textContent = 'Copy';
           btn.classList.remove('copied');
         }, 2000);
       });
