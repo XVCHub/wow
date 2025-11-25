@@ -1,13 +1,99 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>egirlswow - Image Upload</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>doitenroi</title>
+<style>
+:root{--a:#0f1724;--b:#0b1220;--c:#5865f2;--d:#8aa0ff;--e:#e6eef8;--f:#9fb0d6;--g:12px}
+html,body{height:100%}
+body{margin:0;display:grid;place-items:center;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;color:var(--e);background:linear-gradient(270deg,#071028,#0a1a38,#071a2a);background-size:600% 600%;animation:x 18s ease infinite}
+@keyframes x{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+.y{background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.01));border:1px solid rgba(255,255,255,.04);padding:28px;border-radius:var(--g);box-shadow:0 6px 30px rgba(2,6,23,.6);display:flex;gap:16px;align-items:center;min-width:260px;z-index:1}
+.z{display:flex;flex-direction:column;gap:6px}
+.aa{font-size:14px;font-weight:600;letter-spacing:.2px}
+.ab{font-size:12px;color:var(--f)}
+.ac{appearance:none;border:0;background:linear-gradient(180deg,var(--c),var(--d));color:#fff;padding:10px 14px;font-weight:700;font-size:13px;border-radius:10px;cursor:pointer;box-shadow:0 6px 18px rgba(88,101,242,.22),inset 0 -2px 6px rgba(0,0,0,.18);transform:translateZ(0);transition:transform .12s ease,opacity .12s ease;display:inline-flex;gap:8px;align-items:center;white-space:nowrap}
+.ac:active{transform:translateY(1px) scale(.998)}
+.ac .ad{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.18);box-shadow:0 1px 0 rgba(255,255,255,.06) inset}
+.ac.ae{background:linear-gradient(180deg,#2bd26b,#2ae66f);box-shadow:0 6px 18px rgba(43,210,107,.14),inset 0 -2px 6px rgba(0,0,0,.12);animation:af .4s ease}
+@keyframes af{0%{transform:scale(1)}30%{transform:scale(1.1)}60%{transform:scale(.95)}100%{transform:scale(1)}}
+#ag{transition:opacity .25s ease}
+#ag.ah{opacity:0}
+.ai{font-size:12px;color:var(--f);margin-top:8px;text-align:center}
+@media(max-width:420px){.y{padding:18px;min-width:unset}.z .aa{font-size:13px}.ac{padding:9px 12px}}
+</style>
+</head>
+<body>
+<div class="y" role="region" aria-label="discord invite copy">
+  <div class="z">
+    <div class="aa">Discord Invite</div>
+    <div class="ab">Click to copy invite link</div>
+  </div>
+  <button id="aj" class="ac" aria-live="polite" aria-pressed="false">
+    <span class="ad" aria-hidden="true"></span>
+    <span id="ag">Copy Invite</span>
+  </button>
+</div>
+
+<script>
+(function(){
+  const a = "https://discord.gg/rTw5M8dRXN"; // güncel bağlantı
+  const b = document.getElementById("aj");
+  const c = document.getElementById("ag");
+  let d = null;
+
+  function fallbackCopy(text){
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly","");
+    ta.style.position = "absolute";
+    ta.style.left = "-9999px";
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand("copy"); } catch(e) {}
+    document.body.removeChild(ta);
+  }
+
+  async function tryClipboard(text){
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      try { await navigator.clipboard.writeText(text); return true; }
+      catch(e){ fallbackCopy(text); return false; }
+    } else { fallbackCopy(text); return false; }
+  }
+
+  function showCopied(){
+    c.classList.add("ah");
+    setTimeout(()=> {
+      b.classList.add("ae");
+      b.setAttribute("aria-pressed","true");
+      c.textContent = "Copied!";
+      c.classList.remove("ah");
+    }, 250);
+    clearTimeout(d);
+    d = setTimeout(()=>{
+      c.classList.add("ah");
+      setTimeout(()=>{
+        b.classList.remove("ae");
+        b.setAttribute("aria-pressed","false");
+        c.textContent = "Copy Invite";
+        c.classList.remove("ah");
+      }, 250);
+    }, 1600);
+  }
+
+  b.addEventListener("click", async function(){
+    await tryClipboard(a);
+    showCopied();
+  });
+
+  b.addEventListener("keydown", function(ev){
+    if(ev.key === "Enter" || ev.key === " "){
+      ev.preventDefault();
+      b.click();
+    }
+  });
+})();
+</script>
+</body>
 </html>
