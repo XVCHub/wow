@@ -9,7 +9,7 @@ export async function onRequest(context) {
   
   if (url.pathname === '/freecam') {
     return new Response(getFreecamPage(), {
-      headers: { 'Content-Type': 'text/html; charset=utf-8' }
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' }
     });
   }
   
