@@ -123,7 +123,7 @@ async function fetchFromGitHub(folder, filename) {
       }
     }
 
-    const rawUrl = `https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/${folder}/${actualFilename}`;
+    const rawUrl = 'https://raw.githubusercontent.com/' + GITHUB_REPO + '/' + GITHUB_BRANCH + '/' + folder + '/' + actualFilename;
     const response = await fetch(rawUrl);
 
     if (!response.ok) {
