@@ -1,22 +1,251 @@
+const GITHUB_REPO = 'XVCHub/wow';
+const GITHUB_BRANCH = 'main';
+
 export async function onRequest(context) {
   const url = new URL(context.request.url);
-  
-  if (url.pathname === '/') {
+  const pathname = url.pathname;
+
+  if (pathname === '/') {
     return new Response(getHomePage(), {
       headers: { 'Content-Type': 'text/html; charset=utf-8' }
     });
   }
-  
-  if (url.pathname === '/freecam') {
-    return new Response(getFreecamPage(), {
-      headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-    });
+
+  if (pathname.startsWith('/scripts/')) {
+    const filename = pathname.replace('/scripts/', '');
+    return await fetchFromGitHub('scripts', filename);
   }
-  
+
+  if (pathname.startsWith('/images/')) {
+    const filename = pathname.replace('/images/', '');
+    return await fetchFromGitHub('images', filename);
+  }
+
+  if (pathname === '/👅') {
+    return await listImages();
+  }
+
   return new Response('404 - Not Found', { 
     status: 404,
     headers: { 'Content-Type': 'text/plain; charset=utf-8' }
   });
+}
+
+async function fetchFromGitHub(folder, filename) {
+  try {
+    let actualFilename = filename;
+    
+    if (!filename.includes('.')) {
+      const extensions = ['.lua', '.txt', '.js', '.py'];
+      const filesResponse = await fetch(
+        `https://api.github.com/repos/${GITHUB_REPO}/contents/${folder}`,
+        { headers: { 'User-Agent': 'Cloudflare-Worker' } }
+      );
+      
+      if (filesResponse.ok) {
+        const files = await filesResponse.json();
+        const baseName = filename.toLowerCase();
+        
+        const matchingFiles = files
+          .filter(f => f.type === 'file')
+          .filter(f => {
+            const name = f.name.toLowerCase();
+            return name.startsWith(baseName) && 
+                   (name === baseName + '.lua' || 
+                    name === baseName + '.txt' ||
+                    name === baseName + '.js' ||
+                    name === baseName + '.py' ||
+                    name.match(new RegExp(`^${baseName}v\\d+\\.(lua|txt|js|py)$`)));
+          })
+          .sort((a, b) => {
+            const aMatch = a.name.match(/v(\d+)/);
+            const bMatch = b.name.match(/v(\d+)/);
+            if (aMatch && bMatch) {
+              return parseInt(bMatch[1]) - parseInt(aMatch[1]);
+            }
+            return aMatch ? 1 : -1;
+          });
+
+        if (matchingFiles.length > 0) {
+          actualFilename = matchingFiles[0].name;
+        } else {
+          for (const ext of extensions) {
+            const testFile = files.find(f => f.name.toLowerCase() === (baseName + ext));
+            if (testFile) {
+              actualFilename = testFile.name;
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    const rawUrl = `https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/${folder}/${actualFilename}`;
+    const response = await fetch(rawUrl);
+
+    if (!response.ok) {
+      return new Response('File not found', { 
+        status: 404,
+        headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+      });
+    }
+
+    const content = await response.text();
+    const isImage = actualFilename.match(/\.(png|jpg|jpeg|gif|webp|svg)$/i);
+
+    if (isImage) {
+      const contentType = getImageContentType(actualFilename);
+      return new Response(content, {
+        headers: { 'Content-Type': contentType }
+      });
+    }
+
+    return new Response(content, {
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+    });
+
+  } catch (error) {
+    return new Response('Error fetching file: ' + error.message, {
+      status: 500,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+    });
+  }
+}
+
+async function listImages() {
+  try {
+    const response = await fetch(
+      `https://api.github.com/repos/${GITHUB_REPO}/contents/images`,
+      { headers: { 'User-Agent': 'Cloudflare-Worker' } }
+    );
+
+    if (!response.ok) {
+      return new Response('Images folder not found', { status: 404 });
+    }
+
+    const files = await response.json();
+    const imageFiles = files
+      .filter(f => f.type === 'file')
+      .filter(f => f.name.match(/\.(png|jpg|jpeg|gif|webp|svg)$/i));
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Images Gallery</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0d1117;
+      color: #c9d1d9;
+      padding: 20px;
+    }
+    .header {
+      max-width: 1200px;
+      margin: 0 auto 30px;
+    }
+    h1 {
+      color: #58a6ff;
+      margin-bottom: 10px;
+    }
+    .back-link {
+      color: #58a6ff;
+      text-decoration: none;
+    }
+    .back-link:hover {
+      text-decoration: underline;
+    }
+    .gallery {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+    }
+    .image-card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      overflow: hidden;
+      transition: transform 0.2s;
+    }
+    .image-card:hover {
+      transform: translateY(-4px);
+      border-color: #58a6ff;
+    }
+    .image-card img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      background: #0d1117;
+    }
+    .image-info {
+      padding: 15px;
+    }
+    .image-name {
+      color: #58a6ff;
+      font-weight: 500;
+      margin-bottom: 8px;
+      word-break: break-all;
+    }
+    .image-link {
+      color: #8b949e;
+      text-decoration: none;
+      font-size: 13px;
+    }
+    .image-link:hover {
+      color: #58a6ff;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>hehe</h1>
+    <a href="/" class="back-link">← Back to home</a>
+  </div>
+  <div class="gallery">
+    ${imageFiles.map(file => `
+      <div class="image-card">
+        <img src="https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/images/${file.name}" alt="${file.name}">
+        <div class="image-info">
+          <div class="image-name">${file.name}</div>
+          <a href="/images/${file.name}" class="image-link">View full image →</a>
+        </div>
+      </div>
+    `).join('')}
+  </div>
+</body>
+</html>`;
+
+    return new Response(html, {
+      headers: { 'Content-Type': 'text/html; charset=utf-8' }
+    });
+
+  } catch (error) {
+    return new Response('Error loading images: ' + error.message, {
+      status: 500,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+    });
+  }
+}
+
+function getImageContentType(filename) {
+  const ext = filename.split('.').pop().toLowerCase();
+  const types = {
+    'png': 'image/png',
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'gif': 'image/gif',
+    'webp': 'image/webp',
+    'svg': 'image/svg+xml'
+  };
+  return types[ext] || 'image/png';
 }
 
 function getHomePage() {
@@ -116,205 +345,4 @@ function getHomePage() {
   </script>
 </body>
 </html>`;
-}
-
-function getFreecamPage() {
-  return `local FreeCam = {}
-FreeCam.Enabled = false
-
-local PI = math.pi
-local ABS = math.abs
-local CLAMP = math.clamp
-local EXP = math.exp
-local RAD = math.rad
-local SIGN = math.sign
-local SQRT = math.sqrt
-local TAN = math.tan
-
-local CAS = game:GetService("ContextActionService")
-local Players = game:GetService("Players")
-local RS = game:GetService("RunService")
-local SG = game:GetService("StarterGui")
-local UIS = game:GetService("UserInputService")
-
-local LP = Players.LocalPlayer
-local Camera = workspace.CurrentCamera
-
-local Spring = {}
-Spring.__index = Spring
-
-function Spring.new(freq, pos)
-	local self = setmetatable({}, Spring)
-	self.f = freq
-	self.p = pos
-	self.v = pos * 0
-	return self
-end
-
-function Spring:Update(dt, goal)
-	local f = self.f * 2 * PI
-	local p0 = self.p
-	local v0 = self.v
-	local offset = goal - p0
-	local decay = EXP(-f * dt)
-	local p1 = goal + (v0 * dt - offset * (f * dt + 1)) * decay
-	local v1 = (f * dt * (offset * f - v0) + v0) * decay
-	self.p = p1
-	self.v = v1
-	return p1
-end
-
-function Spring:Reset(pos)
-	self.p = pos
-	self.v = pos * 0
-end
-
-local velSpring = Spring.new(1.5, Vector3.new())
-local panSpring = Spring.new(1, Vector2.new())
-local fovSpring = Spring.new(4, 0)
-
-local Input = {}
-local NAV_KEYBOARD_SPEED = Vector3.new(1, 1, 1) * 64
-local PAN_MOUSE_SPEED = Vector2.new(0.75, 1) * 8
-local FOV_WHEEL_SPEED = 300
-local MAX_PITCH = RAD(90)
-
-local gamepad = {
-	ButtonX = 0,
-	ButtonY = 0,
-	DPadDown = 0,
-	DPadUp = 0,
-	ButtonL2 = 0,
-	ButtonR2 = 0,
-	Thumbstick1 = Vector2.new(),
-	Thumbstick2 = Vector2.new()
-}
-
-local keyboard = {
-	W = 0, A = 0, S = 0, D = 0, E = 0, Q = 0,
-	U = 0, H = 0, J = 0, K = 0, I = 0, Y = 0,
-	Up = 0, Down = 0, LeftShift = 0, RightShift = 0
-}
-
-local mouse = {
-	Delta = Vector2.new(),
-	MouseWheel = 0
-}
-
-local function Axis(n)
-	return SIGN(n) * CLAMP(ABS(n) - 0.15, 0, 1) / 0.85
-end
-
-function Input.Vel(dt)
-	local kSpeed = Vector3.new(keyboard.D - keyboard.A, keyboard.E - keyboard.Q, keyboard.S - keyboard.W)
-	return kSpeed
-end
-
-function Input.Pan()
-	local mDelta = mouse.Delta * Vector2.new(1, 1) * (PI / 64)
-	mouse.Delta = Vector2.new()
-	return mDelta
-end
-
-function Input.Fov()
-	local wheel = mouse.MouseWheel
-	mouse.MouseWheel = 0
-	return wheel
-end
-
-local function KeyboardInput(_, state, input)
-	keyboard[input.KeyCode.Name] = state == Enum.UserInputState.Begin and 1 or 0
-	return Enum.ContextActionResult.Sink
-end
-
-local function MousePanInput(_, _, input)
-	local delta = input.Delta
-	mouse.Delta = Vector2.new(-delta.y, -delta.x)
-	return Enum.ContextActionResult.Sink
-end
-
-local function MouseWheelInput(_, _, input)
-	mouse[input.UserInputType.Name] = -input.Position.z
-	return Enum.ContextActionResult.Sink
-end
-
-function Input.StartCapture()
-	CAS:BindActionAtPriority("FreecamKeyboard", KeyboardInput, false, 3000, Enum.KeyCode.W, Enum.KeyCode.A, Enum.KeyCode.S, Enum.KeyCode.D, Enum.KeyCode.E, Enum.KeyCode.Q, Enum.KeyCode.Up, Enum.KeyCode.Down)
-	CAS:BindActionAtPriority("FreecamMousePan", MousePanInput, false, 3000, Enum.UserInputType.MouseMovement)
-	CAS:BindActionAtPriority("FreecamMouseWheel", MouseWheelInput, false, 3000, Enum.UserInputType.MouseWheel)
-end
-
-function Input.StopCapture()
-	CAS:UnbindAction("FreecamKeyboard")
-	CAS:UnbindAction("FreecamMousePan")
-	CAS:UnbindAction("FreecamMouseWheel")
-	for k in pairs(keyboard) do keyboard[k] = 0 end
-	for k in pairs(mouse) do mouse[k] = type(mouse[k]) == "number" and 0 or Vector2.new() end
-end
-
-local cameraPos = Vector3.new()
-local cameraRot = Vector2.new()
-local cameraFov = 0
-
-local function StepFreecam(dt)
-	local vel = velSpring:Update(dt, Input.Vel(dt))
-	local pan = panSpring:Update(dt, Input.Pan())
-	local fov = fovSpring:Update(dt, Input.Fov())
-	
-	cameraFov = CLAMP(cameraFov + fov * FOV_WHEEL_SPEED * dt, 1, 120)
-	cameraRot = cameraRot + pan * PAN_MOUSE_SPEED * dt
-	cameraRot = Vector2.new(CLAMP(cameraRot.x, -MAX_PITCH, MAX_PITCH), cameraRot.y % (2 * PI))
-	
-	local cf = CFrame.new(cameraPos) * CFrame.fromOrientation(cameraRot.x, cameraRot.y, 0) * CFrame.new(vel * NAV_KEYBOARD_SPEED * dt)
-	cameraPos = cf.p
-	
-	Camera.CFrame = cf
-	Camera.Focus = cf
-	Camera.FieldOfView = cameraFov
-end
-
-local savedProps = {}
-
-function FreeCam:Enable()
-	if self.Enabled then return end
-	self.Enabled = true
-	
-	savedProps.CameraType = Camera.CameraType
-	savedProps.CameraSubject = Camera.CameraSubject
-	savedProps.FieldOfView = Camera.FieldOfView
-	savedProps.CFrame = Camera.CFrame
-	savedProps.Focus = Camera.Focus
-	
-	local cf = Camera.CFrame
-	cameraRot = Vector2.new(cf:toEulerAnglesYXZ())
-	cameraPos = cf.p
-	cameraFov = Camera.FieldOfView
-	
-	velSpring:Reset(Vector3.new())
-	panSpring:Reset(Vector2.new())
-	fovSpring:Reset(0)
-	
-	Camera.CameraType = Enum.CameraType.Custom
-	Camera.CameraSubject = nil
-	Camera.FieldOfView = 70
-	
-	RS:BindToRenderStep("Freecam", Enum.RenderPriority.Camera.Value, StepFreecam)
-	Input.StartCapture()
-end
-
-function FreeCam:Disable()
-	if not self.Enabled then return end
-	self.Enabled = false
-	
-	Input.StopCapture()
-	RS:UnbindFromRenderStep("Freecam")
-	
-	Camera.CameraType = savedProps.CameraType
-	Camera.CameraSubject = savedProps.CameraSubject
-	Camera.FieldOfView = savedProps.FieldOfView
-	Camera.CFrame = savedProps.CFrame
-	Camera.Focus = savedProps.Focus
-end
-
-return FreeCam`;
 }
