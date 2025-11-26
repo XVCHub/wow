@@ -3,7 +3,7 @@ const GITHUB_BRANCH = 'main';
 
 export async function onRequest(context) {
   const url = new URL(context.request.url);
-  const pathname = url.pathname;
+  let pathname = decodeURIComponent(url.pathname);
 
   if (pathname === '/') {
     return new Response(getHomePage(), {
