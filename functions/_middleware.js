@@ -36,7 +36,7 @@ async function fetchFromGitHub(folder, filename) {
     let actualFilename = filename;
     
     if (!filename.includes('.')) {
-      const extensions = ['.lua', '.txt', '.js', '.py'];
+      const extensions = ['.lua', '.txt', '.js', '.py', '.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg'];
       const filesResponse = await fetch(
         `https://api.github.com/repos/${GITHUB_REPO}/contents/${folder}`,
         { headers: { 'User-Agent': 'Cloudflare-Worker' } }
@@ -55,7 +55,50 @@ async function fetchFromGitHub(folder, filename) {
                     name === baseName + '.txt' ||
                     name === baseName + '.js' ||
                     name === baseName + '.py' ||
-                    name.match(new RegExp(`^${baseName}v\\d+\\.(lua|txt|js|py)$`)));
+                    name === baseName + '.png' ||
+                    name === baseName + '.jpg' ||
+                    name === baseName + '.jpeg' ||
+                    name === baseName + '.gif' ||
+                    name === baseName + '.webp' ||
+                    name === baseName + '.svg' ||
+                    name.match(new RegExp(`^${baseName}v\\d+\\.(lua|txt|js|py|png|jpg|jpeg|gif|webp|svg)const GITHUB_REPO = 'XVCHub/wow';
+const GITHUB_BRANCH = 'main';
+
+export async function onRequest(context) {
+  const url = new URL(context.request.url);
+  const pathname = url.pathname;
+
+  if (pathname === '/') {
+    return new Response(getHomePage(), {
+      headers: { 'Content-Type': 'text/html; charset=utf-8' }
+    });
+  }
+
+  if (pathname.startsWith('/scripts/')) {
+    const filename = pathname.replace('/scripts/', '');
+    return await fetchFromGitHub('scripts', filename);
+  }
+
+  if (pathname.startsWith('/images/')) {
+    const filename = pathname.replace('/images/', '');
+    return await fetchFromGitHub('images', filename);
+  }
+
+  if (pathname === '/👅') {
+    return await listImages();
+  }
+
+  return new Response('404 - Not Found', { 
+    status: 404,
+    headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+  });
+}
+
+async function fetchFromGitHub(folder, filename) {
+  try {
+    let actualFilename = filename;
+    
+)));
           })
           .sort((a, b) => {
             const aMatch = a.name.match(/v(\d+)/);
@@ -90,16 +133,20 @@ async function fetchFromGitHub(folder, filename) {
       });
     }
 
-    const content = await response.text();
     const isImage = actualFilename.match(/\.(png|jpg|jpeg|gif|webp|svg)$/i);
 
     if (isImage) {
       const contentType = getImageContentType(actualFilename);
-      return new Response(content, {
-        headers: { 'Content-Type': contentType }
+      const imageBlob = await response.blob();
+      return new Response(imageBlob, {
+        headers: { 
+          'Content-Type': contentType,
+          'Cache-Control': 'public, max-age=86400'
+        }
       });
     }
 
+    const content = await response.text();
     return new Response(content, {
       headers: { 'Content-Type': 'text/plain; charset=utf-8' }
     });
@@ -206,7 +253,7 @@ async function listImages() {
 </head>
 <body>
   <div class="header">
-    <h1>hehe</h1>
+    <h1>👅 Images Gallery</h1>
     <a href="/" class="back-link">← Back to home</a>
   </div>
   <div class="gallery">
