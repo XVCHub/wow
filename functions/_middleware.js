@@ -37,57 +37,34 @@ async function fetchFromGitHub(folder, filename) {
     
     if (!filename.includes('.')) {
       const extensions = ['.lua', '.txt', '.js', '.py', '.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg'];
-      const apiUrl = 'https://api.github.com/repos/' + GITHUB_REPO + '/contents/' + folder;
-      const filesResponse = await fetch(apiUrl, { 
-        headers: { 'User-Agent': 'Cloudflare-Worker' } 
-      });
       
-      if (filesResponse.ok) {
-        const files = await filesResponse.json();
-        const baseName = filename.toLowerCase();
+      for (let i = 0; i < extensions.length; i++) {
+        const ext = extensions[i];
+        const testFilename = filename + ext;
+        const testUrl = 'https://raw.githubusercontent.com/' + GITHUB_REPO + '/' + GITHUB_BRANCH + '/' + folder + '/' + testFilename;
+        const testResponse = await fetch(testUrl, { method: 'HEAD' });
         
-        const matchingFiles = files
-          .filter(function(f) { return f.type === 'file'; })
-          .filter(function(f) {
-            const name = f.name.toLowerCase();
-            const hasBasicExt = name === baseName + '.lua' || 
-                    name === baseName + '.txt' ||
-                    name === baseName + '.js' ||
-                    name === baseName + '.py' ||
-                    name === baseName + '.png' ||
-                    name === baseName + '.jpg' ||
-                    name === baseName + '.jpeg' ||
-                    name === baseName + '.gif' ||
-                    name === baseName + '.webp' ||
-                    name === baseName + '.svg';
-            
-            const versionRegex = new RegExp('^' + baseName + 'v[0-9]+\\.(lua|txt|js|py|png|jpg|jpeg|gif|webp|svg)$');
-            const hasVersionExt = versionRegex.test(name);
-            
-            return name.startsWith(baseName) && (hasBasicExt || hasVersionExt);
-          })
-          .sort(function(a, b) {
-            const aMatch = a.name.match(/v([0-9]+)/);
-            const bMatch = b.name.match(/v([0-9]+)/);
-            if (aMatch && bMatch) {
-              return parseInt(bMatch[1]) - parseInt(aMatch[1]);
-            }
-            return aMatch ? 1 : -1;
-          });
-
-        if (matchingFiles.length > 0) {
-          actualFilename = matchingFiles[0].name;
-        } else {
+        if (testResponse.ok) {
+          actualFilename = testFilename;
+          break;
+        }
+      }
+      
+      if (!actualFilename.includes('.')) {
+        const baseName = filename.toLowerCase();
+        for (let v = 10; v >= 2; v--) {
           for (let i = 0; i < extensions.length; i++) {
             const ext = extensions[i];
-            const testFile = files.find(function(f) { 
-              return f.name.toLowerCase() === (baseName + ext); 
-            });
-            if (testFile) {
-              actualFilename = testFile.name;
+            const versionFilename = filename + 'v' + v + ext;
+            const versionUrl = 'https://raw.githubusercontent.com/' + GITHUB_REPO + '/' + GITHUB_BRANCH + '/' + folder + '/' + versionFilename;
+            const versionResponse = await fetch(versionUrl, { method: 'HEAD' });
+            
+            if (versionResponse.ok) {
+              actualFilename = versionFilename;
               break;
             }
           }
+          if (actualFilename.includes('.')) break;
         }
       }
     }
@@ -96,7 +73,7 @@ async function fetchFromGitHub(folder, filename) {
     const response = await fetch(rawUrl);
 
     if (!response.ok) {
-      return new Response('File not found', { 
+      return new Response('File not found: ' + rawUrl, { 
         status: 404,
         headers: { 'Content-Type': 'text/plain; charset=utf-8' }
       });
