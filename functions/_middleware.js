@@ -11,18 +11,18 @@ export async function onRequest(context) {
     });
   }
 
-  if (pathname.startsWith('/scripts/')) {
-    const filename = pathname.replace('/scripts/', '');
-    return await fetchFromGitHub('scripts', filename);
+  if (pathname === '/👅') {
+    return await listImages();
   }
 
-  if (pathname.startsWith('/images/')) {
-    const filename = pathname.replace('/images/', '');
+  if (pathname.startsWith('/👅/')) {
+    const filename = pathname.replace('/👅/', '');
     return await fetchFromGitHub('images', filename);
   }
 
-  if (pathname === '/👅') {
-    return await listImages();
+  if (pathname !== '/') {
+    const filename = pathname.substring(1);
+    return await fetchFromGitHub('scripts', filename);
   }
 
   return new Response('404 - Not Found', { 
@@ -152,7 +152,7 @@ async function listImages() {
       imageCards += '<img src="' + imgUrl + '" alt="' + file.name + '">';
       imageCards += '<div class="image-info">';
       imageCards += '<div class="image-name">' + file.name + '</div>';
-      imageCards += '<a href="/images/' + file.name + '" class="image-link">View full image</a>';
+      imageCards += '<a href="/👅/' + file.name + '" class="image-link">View full image</a>';
       imageCards += '</div>';
       imageCards += '</div>';
     }
