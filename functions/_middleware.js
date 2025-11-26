@@ -38,7 +38,7 @@ async function fetchFromGitHub(folder, filename) {
     if (!filename.includes('.')) {
       const extensions = ['.lua', '.txt', '.js', '.py', '.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg'];
       const filesResponse = await fetch(
-        `https://api.github.com/repos/${GITHUB_REPO}/contents/${folder}`,
+        'https://api.github.com/repos/' + GITHUB_REPO + '/contents/' + folder,
         { headers: { 'User-Agent': 'Cloudflare-Worker' } }
       );
       
@@ -162,7 +162,7 @@ async function fetchFromGitHub(folder, filename) {
 async function listImages() {
   try {
     const response = await fetch(
-      `https://api.github.com/repos/${GITHUB_REPO}/contents/images`,
+      'https://api.github.com/repos/' + GITHUB_REPO + '/contents/images',
       { headers: { 'User-Agent': 'Cloudflare-Worker' } }
     );
 
@@ -257,15 +257,15 @@ async function listImages() {
     <a href="/" class="back-link">← Back to home</a>
   </div>
   <div class="gallery">
-    ${imageFiles.map(file => `
-      <div class="image-card">
-        <img src="https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/images/${file.name}" alt="${file.name}">
-        <div class="image-info">
-          <div class="image-name">${file.name}</div>
-          <a href="/images/${file.name}" class="image-link">View full image →</a>
-        </div>
-      </div>
-    `).join('')}
+    ${imageFiles.map(file => 
+      '<div class="image-card">' +
+        '<img src="https://raw.githubusercontent.com/' + GITHUB_REPO + '/' + GITHUB_BRANCH + '/images/' + file.name + '" alt="' + file.name + '">' +
+        '<div class="image-info">' +
+          '<div class="image-name">' + file.name + '</div>' +
+          '<a href="/images/' + file.name + '" class="image-link">View full image →</a>' +
+        '</div>' +
+      '</div>'
+    ).join('')}
   </div>
 </body>
 </html>`;
