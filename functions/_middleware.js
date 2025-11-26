@@ -66,7 +66,9 @@ async function fetchFromGitHub(folder, filename) {
             break;
           }
           
-          const versionMatch = name.match(new RegExp('^' + baseName + 'v([0-9]+)\\.(lua|txt|js|py|png|jpg|jpeg|gif|webp|svg)
+const versionMatch = name.match(
+  new RegExp('^' + baseName + 'v([0-9]+)\\.(lua|txt|js|py|png|jpg|jpeg|gif|webp|svg)$')
+);
 
 async function listImages() {
   try {
