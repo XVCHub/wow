@@ -1,6 +1,10 @@
-// a
 const GITHUB_REPO = 'XVCHub/wow';
 const GITHUB_BRANCH = 'main';
+
+const FOLDER_ROUTES = {
+  '👅': 'images',
+  'cracks': 'cracks'
+};
 
 export async function onRequest(context) {
   const url = new URL(context.request.url);
@@ -12,13 +16,15 @@ export async function onRequest(context) {
     });
   }
 
-  if (pathname === '/👅') {
-    return await listImages();
-  }
-
-  if (pathname.startsWith('/👅/')) {
-    const filename = pathname.replace('/👅/', '');
-    return await fetchFromGitHub('images', filename);
+  for (const [route, folder] of Object.entries(FOLDER_ROUTES)) {
+    if (pathname === '/' + route) {
+      return await listFiles(folder, route);
+    }
+    
+    if (pathname.startsWith('/' + route + '/')) {
+      const filename = pathname.replace('/' + route + '/', '');
+      return await fetchFromGitHub(folder, filename);
+    }
   }
 
   if (pathname !== '/') {
@@ -62,13 +68,15 @@ async function fetchFromGitHub(folder, filename) {
               name === baseName + '.js' || name === baseName + '.py' ||
               name === baseName + '.png' || name === baseName + '.jpg' || 
               name === baseName + '.jpeg' || name === baseName + '.gif' ||
-              name === baseName + '.webp' || name === baseName + '.svg') {
+              name === baseName + '.webp' || name === baseName + '.svg' ||
+              name === baseName + '.exe' || name === baseName + '.dll' ||
+              name === baseName + '.zip' || name === baseName + '.rar') {
             foundFile = file.name;
             break;
           }
           
           const versionMatch = name.match(
-            new RegExp('^' + baseName + 'v([0-9]+)\\.(lua|txt|js|py|png|jpg|jpeg|gif|webp|svg)$')
+            new RegExp('^' + baseName + 'v([0-9]+)\\.(lua|txt|js|py|png|jpg|jpeg|gif|webp|svg|exe|dll|zip|rar)$')
           );
           
           if (versionMatch) {
@@ -97,6 +105,7 @@ async function fetchFromGitHub(folder, filename) {
     }
 
     const isImage = actualFilename.match(/\.(png|jpg|jpeg|gif|webp|svg)$/i);
+    const isBinary = actualFilename.match(/\.(exe|dll|zip|rar)$/i);
 
     if (isImage) {
       const contentType = getImageContentType(actualFilename);
@@ -104,6 +113,18 @@ async function fetchFromGitHub(folder, filename) {
       return new Response(imageBlob, {
         headers: { 
           'Content-Type': contentType,
+          'Cache-Control': 'public, max-age=86400'
+        }
+      });
+    }
+
+    if (isBinary) {
+      const contentType = getBinaryContentType(actualFilename);
+      const binaryBlob = await response.blob();
+      return new Response(binaryBlob, {
+        headers: { 
+          'Content-Type': contentType,
+          'Content-Disposition': 'attachment; filename="' + actualFilename + '"',
           'Cache-Control': 'public, max-age=86400'
         }
       });
@@ -122,43 +143,55 @@ async function fetchFromGitHub(folder, filename) {
   }
 }
 
-async function listImages() {
+async function listFiles(folder, route) {
   try {
-    const apiUrl = 'https://api.github.com/repos/' + GITHUB_REPO + '/contents/images';
+    const apiUrl = 'https://api.github.com/repos/' + GITHUB_REPO + '/contents/' + folder;
     const response = await fetch(apiUrl, { 
       headers: { 'User-Agent': 'Cloudflare-Worker' } 
     });
 
     if (!response.ok) {
-      return new Response('Images folder not found', { status: 404 });
+      return new Response(folder + ' folder not found', { status: 404 });
     }
 
     const files = await response.json();
-    const imageFiles = files
-      .filter(function(f) { return f.type === 'file'; })
-      .filter(function(f) { return f.name.match(/\.(png|jpg|jpeg|gif|webp|svg)$/i); });
+    const fileList = files.filter(function(f) { return f.type === 'file'; });
 
-    let imageCards = '';
-    for (let i = 0; i < imageFiles.length; i++) {
-      const file = imageFiles[i];
-      const imgUrl = 'https://raw.githubusercontent.com/' + GITHUB_REPO + '/' + GITHUB_BRANCH + '/images/' + file.name;
-      imageCards += '<div class="image-card">';
-      imageCards += '<img src="' + imgUrl + '" alt="' + file.name + '">';
-      imageCards += '<div class="image-info">';
-      imageCards += '<div class="image-name">' + file.name + '</div>';
-      imageCards += '<a href="/👅/' + file.name + '" class="image-link">View full image</a>';
-      imageCards += '</div>';
-      imageCards += '</div>';
+    const isImageFolder = folder === 'images';
+    let cards = '';
+
+    for (let i = 0; i < fileList.length; i++) {
+      const file = fileList[i];
+      const fileUrl = 'https://raw.githubusercontent.com/' + GITHUB_REPO + '/' + GITHUB_BRANCH + '/' + folder + '/' + file.name;
+      
+      if (isImageFolder && file.name.match(/\.(png|jpg|jpeg|gif|webp|svg)$/i)) {
+        cards += '<div class="image-card">';
+        cards += '<img src="' + fileUrl + '" alt="' + file.name + '">';
+        cards += '<div class="image-info">';
+        cards += '<div class="image-name">' + file.name + '</div>';
+        cards += '<a href="/' + route + '/' + file.name + '" class="image-link">View full image</a>';
+        cards += '</div>';
+        cards += '</div>';
+      } else {
+        cards += '<div class="file-card">';
+        cards += '<div class="file-icon">📄</div>';
+        cards += '<div class="file-info">';
+        cards += '<div class="file-name">' + file.name + '</div>';
+        cards += '<a href="/' + route + '/' + file.name + '" class="file-link">Download</a>';
+        cards += '</div>';
+        cards += '</div>';
+      }
     }
 
-    const html = '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Images Gallery</title><link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAADy0lEQVR4nO2WS0hUYRTHf2M6lqZhD8tKSyN6kFZEQUG0iYyWEbWoaBERRJuIoCKKNkEv2hQF0aZVUBAtIqhFGxFaBEVBQS8qoqKgJXrYI7PU+cU/nAvD3DszdzozC/3hcDnf+b7v/z/n+873QQwxxBBDDP8TKvU+oMeBcWASUA0MAZ1AC3AZaARqgJ+FIq8GpoX4O4E2oBjYIbNVgDOW4xfgIzAb+FYI8m/AVgkfBwYDCp4BPgEXBY5jBJgLfMk3+VdgcwD5BkkdayjAD+A1cBbYKOcYO6OI2bpbMX5IOc4Gg6GYCw4g/wAsCCj4NxFqBRYBpZLvJnBKxJYCt4DbGtsl40xgrp7pAY7oed+Bq8AO5a+RvleApXHyTqBcAs2RZs8Ak3Vi3QJuKl4m+ZPA7pjE7wCLJfs4UKbYOhE5DkwR+V6gOoZ/HLhL27BfRNqjvO/2Jvy25C+MyVrVy4M+S2kOINIi4l3AsAjYqP1kld9Sng9Yqfh7gRUx8veUo0vE20TgUwD5tpC39U/EbEEb4Q2RfCfkZ5RjtdK9l1n3gE0BzzdJb6LGfEUtIrNd5O1mM3AKgaFqDiNfIeJPFesMEBjnSjCq+VcapnxJ+Zoljj39p8DKgOftkk4fSqMqwG5+x0WyXaTd0uuLIl+iyznl14nA7gDy1cCviORfuMjXu8h/DCA/XW0kJ6+5kgf5ToEt3k0/kv8G7Asgv0fOYDsfKPaBlGKX9LsDiM/UqjV0DaOqkq0gVijGmgDyC1Tt2kjPu+Wnlb82gPwmXUDjfDZii4FfWTohL1p3e8jtVxU7L2e4pkYy2iC/Q+T7o5B3K+aygIpfrDjbgD/l3O0RBWfpKnYHeenk5Pmu6lF3x8ifD3iBbQG2xSS/yGW+xqVzT0f6dhxz7wiwPSb5SpHqUm5ffPJTXb7FbYof3e8BwyI0BziSBeF0vv0GaE8hr2sJKPiPqtB+rV0xjssW5gSw35UgXV/wANiTh+DrQzEt+RgD1uRB+M4gjUd1pTY+ZF0xqv9CHl8cGvPxv5AvoRh3svg2shEeq+YSRA1wH1iTB+GVLq3r+lB+x1zEK0P+VtT5n6T0u0J+3rF/RP+RlH5tyC/U7ZdJd1f/sZR+e8gvlv5ZSn9WyK8x/c5QzOMhf1zoNwd8FKVJF/TmCPmV/5i8Ta7L+vwq1TDKk+ry/zjuC/1yrxGHXZX1cH8u6p8T1Y/2qRZU6h/vRv1o36v/QWKIIYYY/if8Be1FexdwvkEQAAAAAElFTkSuQmCC"><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;background:#0d1117;color:#c9d1d9;padding:20px;}.header{max-width:1200px;margin:0 auto 30px;}h1{color:#58a6ff;margin-bottom:10px;}.back-link{color:#58a6ff;text-decoration:none;}.back-link:hover{text-decoration:underline;}.gallery{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:20px;}.image-card{background:#161b22;border:1px solid #30363d;border-radius:8px;overflow:hidden;transition:transform 0.2s;}.image-card:hover{transform:translateY(-4px);border-color:#58a6ff;}.image-card img{width:100%;height:200px;object-fit:cover;background:#0d1117;}.image-info{padding:15px;}.image-name{color:#58a6ff;font-weight:500;margin-bottom:8px;word-break:break-all;}.image-link{color:#8b949e;text-decoration:none;font-size:13px;}.image-link:hover{color:#58a6ff;}</style></head><body><div class="header"><h1>Images Gallery</h1><a href="/" class="back-link">Back to home</a></div><div class="gallery">' + imageCards + '</div></body></html>';
+    const title = folder.charAt(0).toUpperCase() + folder.slice(1) + ' Gallery';
+    const html = '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>' + title + '</title><link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAADy0lEQVR4nO2WS0hUYRTHf2M6lqZhD8tKSyN6kFZEQUG0iYyWEbWoaBERRJuIoCKKNkEv2hQF0aZVUBAtIqhFGxFaBEVBQS8qoqKgJXrYI7PU+cU/nAvD3DszdzozC/3hcDnf+b7v/z/n+873QQwxxBBDDP8TKvU+oMeBcWASUA0MAZ1AC3AZaARqgJ+FIq8GpoX4O4E2oBjYIbNVgDOW4xfgIzAb+FYI8m/AVgkfBwYDCp4BPgEXBY5jBJgLfMk3+VdgcwD5BkkdayjAD+A1cBbYKOcYO6OI2bpbMX5IOc4Gg6GYCw4g/wAsCCj4NxFqBRYBpZLvJnBKxJYCt4DbGtsl40xgrp7pAY7oed+Bq8AO5a+RvleApXHyTqBcAs2RZs8Ak3Vi3QJuKl4m+ZPA7pjE7wCLJfs4UKbYOhE5DkwR+V6gOoZ/HLhL27BfRNqjvO/2Jvy25C+MyVrVy4M+S2kOINIi4l3AsAjYqP1kld9Sng9Yqfh7gRUx8veUo0vE20TgUwD5tpC39U/EbEEb4Q2RfCfkZ5RjtdK9l1n3gE0BzzdJb6LGfEUtIrNd5O1mM3AKgaFqDiNfIeJPFesMEBjnSjCq+VcapnxJ+Zoljj39p8DKgOftkk4fSqMqwG5+x0WyXaTd0uuLIl+iyznl14nA7gDy1cCviORfuMjXu8h/DCA/XW0kJ6+5kgf5ToEt3k0/kv8G7Asgv0fOYDsfKPaBlGKX9LsDiM/UqjV0DaOqkq0gVijGmgDyC1Tt2kjPu+Wnlb82gPwmXUDjfDZii4FfWTohL1p3e8jtVxU7L2e4pkYy2iC/Q+T7o5B3K+aygIpfrDjbgD/l3O0RBWfpKnYHeenk5Pmu6lF3x8ifD3iBbQG2xSS/yGW+xqVzT0f6dhxz7wiwPSb5SpHqUm5ffPJTXb7FbYof3e8BwyI0BziSBeF0vv0GaE8hr2sJKPiPqtB+rV0xjssW5gSw35UgXV/wANiTh+DrQzEt+RgD1uRB+M4gjUd1pTY+ZF0xqv9CHl8cGvPxv5AvoRh3svg2shEeq+YSRA1wH1iTB+GVLq3r+lB+x1zEK0P+VtT5n6T0u0J+3rF/RP+RlH5tyC/U7ZdJd1f/sZR+e8gvlv5ZSn9WyK8x/c5QzOMhf1zoNwd8FKVJF/TmCPmV/5i8Ta7L+vwq1TDKk+ry/zjuC/1yrxGHXZX1cH8u6p8T1Y/2qRZU6h/vRv1o36v/QWKIIYYY/if8Be1FexdwvkEQAAAAAElFTkSuQmCC"><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;background:#0d1117;color:#c9d1d9;padding:20px;}.header{max-width:1200px;margin:0 auto 30px;}h1{color:#58a6ff;margin-bottom:10px;}.back-link{color:#58a6ff;text-decoration:none;}.back-link:hover{text-decoration:underline;}.gallery{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:20px;}.image-card,.file-card{background:#161b22;border:1px solid #30363d;border-radius:8px;overflow:hidden;transition:transform 0.2s;}.image-card:hover,.file-card:hover{transform:translateY(-4px);border-color:#58a6ff;}.image-card img{width:100%;height:200px;object-fit:cover;background:#0d1117;}.file-card{display:flex;align-items:center;padding:20px;}.file-icon{font-size:48px;margin-right:20px;}.image-info,.file-info{padding:15px;}.file-info{flex:1;}.image-name,.file-name{color:#58a6ff;font-weight:500;margin-bottom:8px;word-break:break-all;}.image-link,.file-link{color:#8b949e;text-decoration:none;font-size:13px;}.image-link:hover,.file-link:hover{color:#58a6ff;}</style></head><body><div class="header"><h1>' + title + '</h1><a href="/" class="back-link">Back to home</a></div><div class="gallery">' + cards + '</div></body></html>';
 
     return new Response(html, {
       headers: { 'Content-Type': 'text/html; charset=utf-8' }
     });
 
   } catch (error) {
-    return new Response('Error loading images: ' + error.message, {
+    return new Response('Error loading files: ' + error.message, {
       status: 500,
       headers: { 'Content-Type': 'text/plain; charset=utf-8' }
     });
@@ -176,6 +209,17 @@ function getImageContentType(filename) {
     'svg': 'image/svg+xml'
   };
   return types[ext] || 'image/png';
+}
+
+function getBinaryContentType(filename) {
+  const ext = filename.split('.').pop().toLowerCase();
+  const types = {
+    'exe': 'application/x-msdownload',
+    'dll': 'application/x-msdownload',
+    'zip': 'application/zip',
+    'rar': 'application/x-rar-compressed'
+  };
+  return types[ext] || 'application/octet-stream';
 }
 
 function getHomePage() {
