@@ -4,7 +4,7 @@ const GITHUB_BRANCH = 'main';
 const FOLDER_ROUTES = {
   '👅': 'images',
   'cracks': 'cracks',
-  'libs/kick': 'libs/kick'
+  'libs/kick': 'libs/kick',
   'docs/kicklib': 'docs/kicklib'
 };
 
@@ -14,6 +14,12 @@ export async function onRequest(context) {
 
   if (pathname === '/') {
     return new Response(getHomePage(), {
+      headers: { 'Content-Type': 'text/html; charset=utf-8' }
+    });
+  }
+
+  if (pathname === '/docs/kicklib') {
+    return new Response(getKickLibDocs(), {
       headers: { 'Content-Type': 'text/html; charset=utf-8' }
     });
   }
@@ -186,44 +192,4 @@ async function listFiles(folder, route) {
     }
 
     const title = folder.charAt(0).toUpperCase() + folder.slice(1) + ' Gallery';
-    const html = '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>' + title + '</title><link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAADy0lEQVR4nO2WS0hUYRTHf2M6lqZhD8tKSyN6kFZEQUG0iYyWEbWoaBERRJuIoCKKNkEv2hQF0aZVUBAtIqhFGxFaBEVBQS8qoqKgJXrYI7PU+cU/nAvD3DszdzozC/3hcDnf+b7v/z/n+873QQwxxBBDDP8TKvU+oMeBcWASUA0MAZ1AC3AZaARqgJ+FIq8GpoX4O4E2oBjYIbNVgDOW4xfgIzAb+FYI8m/AVgkfBwYDCp4BPgEXBY5jBJgLfMk3+VdgcwD5BkkdayjAD+A1cBbYKOcYO6OI2bpbMX5IOc4Gg6GYCw4g/wAsCCj4NxFqBRYBpZLvJnBKxJYCt4DbGtsl40xgrp7pAY7oed+Bq8AO5a+RvleApXHyTqBcAs2RZs8Ak3Vi3QJuKl4m+ZPA7pjE7wCLJfs4UKbYOhE5DkwR+V6gOoZ/HLhL27BfRNqjvO/2Jvy25C+MyVrVy4M+S2kOINIi4l3AsAjYqP1kld9Sng9Yqfh7gRUx8veUo0vE20TgUwD5tpC39U/EbEEb4Q2RfCfkZ5RjtdK9l1n3gE0BzzdJb6LGfEUtIrNd5O1mM3AKgaFqDiNfIeJPFesMEBjnSjCq+VcapnxJ+Zoljj39p8DKgOftkk4fSqMqwG5+x0WyXaTd0uuLIl+iyznl14nA7gDy1cCviORfuMjXu8h/DCA/XW0kJ6+5kgf5ToEt3k0/kv8G7Asgv0fOYDsfKPaBlGKX9LsDiM/UqjV0DaOqkq0gVijGmgDyC1Tt2kjPu+Wnlb82gPwmXUDjfDZii4FfWTohL1p3e8jtVxU7L2e4pkYy2iC/Q+T7o5B3K+aygIpfrDjbgD/l3O0RBWfpKnYHeenk5Pmu6lF3x8ifD3iBbQG2xSS/yGW+xqVzT0f6dhxz7wiwPSb5SpHqUm5ffPJTXb7FbYof3e8BwyI0BziSBeF0vv0GaE8hr2sJKPiPqtB+rV0xjssW5gSw35UgXV/wANiTh+DrQzEt+RgD1uRB+M4gjUd1pTY+ZF0xqv9CHl8cGvPxv5AvoRh3svg2shEeq+YSRA1wH1iTB+GVLq3r+lB+x1zEK0P+VtT5n6T0u0J+3rF/RP+RlH5tyC/U7ZdJd1f/sZR+e8gvlv5ZSn9WyK8x/c5QzOMhf1zoNwd8FKVJF/TmCPmV/5i8Ta7L+vwq1TDKk+ry/zjuC/1yrxGHXZX1cH8u6p8T1Y/2qRZU6h/vRv1o36v/QWKIIYYY/if8Be1FexdwvkEQAAAAAElFTkSuQmCC"><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;background:#0d1117;color:#c9d1d9;padding:20px;}.header{max-width:1200px;margin:0 auto 30px;}h1{color:#58a6ff;margin-bottom:10px;}.back-link{color:#58a6ff;text-decoration:none;}.back-link:hover{text-decoration:underline;}.gallery{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:20px;}.image-card,.file-card{background:#161b22;border:1px solid #30363d;border-radius:8px;overflow:hidden;transition:transform 0.2s;}.image-card:hover,.file-card:hover{transform:translateY(-4px);border-color:#58a6ff;}.image-card img{width:100%;height:200px;object-fit:cover;background:#0d1117;}.file-card{display:flex;align-items:center;padding:20px;}.file-icon{font-size:48px;margin-right:20px;}.image-info,.file-info{padding:15px;}.file-info{flex:1;}.image-name,.file-name{color:#58a6ff;font-weight:500;margin-bottom:8px;word-break:break-all;}.image-link,.file-link{color:#8b949e;text-decoration:none;font-size:13px;}.image-link:hover,.file-link:hover{color:#58a6ff;}</style></head><body><div class="header"><h1>' + title + '</h1><a href="/" class="back-link">Back to home</a></div><div class="gallery">' + cards + '</div></body></html>';
-
-    return new Response(html, {
-      headers: { 'Content-Type': 'text/html; charset=utf-8' }
-    });
-
-  } catch (error) {
-    return new Response('Error loading files: ' + error.message, {
-      status: 500,
-      headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-    });
-  }
-}
-
-function getImageContentType(filename) {
-  const ext = filename.split('.').pop().toLowerCase();
-  const types = {
-    'png': 'image/png',
-    'jpg': 'image/jpeg',
-    'jpeg': 'image/jpeg',
-    'gif': 'image/gif',
-    'webp': 'image/webp',
-    'svg': 'image/svg+xml'
-  };
-  return types[ext] || 'image/png';
-}
-
-function getBinaryContentType(filename) {
-  const ext = filename.split('.').pop().toLowerCase();
-  const types = {
-    'exe': 'application/x-msdownload',
-    'dll': 'application/x-msdownload',
-    'zip': 'application/zip',
-    'rar': 'application/x-rar-compressed'
-  };
-  return types[ext] || 'application/octet-stream';
-}
-
-function getHomePage() {
-  return '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Discord Invite</title><link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAADy0lEQVR4nO2WS0hUYRTHf2M6lqZhD8tKSyN6kFZEQUG0iYyWEbWoaBERRJuIoCKKNkEv2hQF0aZVUBAtIqhFGxFaBEVBQS8qoqKgJXrYI7PU+cU/nAvD3DszdzozC/3hcDnf+b7v/z/n+873QQwxxBBDDP8TKvU+oMeBcWASUA0MAZ1AC3AZaARqgJ+FIq8GpoX4O4E2oBjYIbNVgDOW4xfgIzAb+FYI8m/AVgkfBwYDCp4BPgEXBY5jBJgLfMk3+VdgcwD5BkkdayjAD+A1cBbYKOcYO6OI2bpbMX5IOc4Gg6GYCw4g/wAsCCj4NxFqBRYBpZLvJnBKxJYCt4DbGtsl40xgrp7pAY7oed+Bq8AO5a+RvleApXHyTqBcAs2RZs8Ak3Vi3QJuKl4m+ZPA7pjE7wCLJfs4UKbYOhE5DkwR+V6gOoZ/HLhL27BfRNqjvO/2Jvy25C+MyVrVy4M+S2kOINIi4l3AsAjYqP1kld9Sng9Yqfh7gRUx8veUo0vE20TgUwD5tpC39U/EbEEb4Q2RfCfkZ5RjtdK9l1n3gE0BzzdJb6LGfEUtIrNd5O1mM3AKgaFqDiNfIeJPFesMEBjnSjCq+VcapnxJ+Zoljj39p8DKgOftkk4fSqMqwG5+x0WyXaTd0uuLIl+iyznl14nA7gDy1cCviORfuMjXu8h/DCA/XW0kJ6+5kgf5ToEt3k0/kv8G7Asgv0fOYDsfKPaBlGKX9LsDiM/UqjV0DaOqkq0gVijGmgDyC1Tt2kjPu+Wnlb82gPwmXUDjfDZii4FfWTohL1p3e8jtVxU7L2e4pkYy2iC/Q+T7o5B3K+aygIpfrDjbgD/l3O0RBWfpKnYHeenk5Pmu6lF3x8ifD3iBbQG2xSS/yGW+xqVzT0f6dhxz7wiwPSb5SpHqUm5ffPJTXb7FbYof3e8BwyI0BziSBeF0vv0GaE8hr2sJKPiPqtB+rV0xjssW5gSw35UgXV/wANiTh+DrQzEt+RgD1uRB+M4gjUd1pTY+ZF0xqv9CHl8cGvPxv5AvoRh3svg2shEeq+YSRA1wH1iTB+GVLq3r+lB+x1zEK0P+VtT5n6T0u0J+3rF/RP+RlH5tyC/U7ZdJd1f/sZR+e8gvlv5ZSn9WyK8x/c5QzOMhf1zoNwd8FKVJF/TmCPmV/5i8Ta7L+vwq1TDKk+ry/zjuC/1yrxGHXZX1cH8u6p8T1Y/2qRZU6h/vRv1o36v/QWKIIYYY/if8Be1FexdwvkEQAAAAAElFTkSuQmCC"><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Segoe UI,Tahoma,Geneva,Verdana,sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px;}.container{background:white;padding:60px 50px;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,0.3);text-align:center;max-width:600px;width:100%;} h1{color:#5865F2;margin-bottom:30px;font-size:2.5em;}.invite-link{background:#f3f4f6;padding:15px;border-radius:10px;margin:20px 0;font-family:Courier New,monospace;color:#333;font-size:1.1em;word-break:break-all;}.btn{background:#5865F2;color:white;border:none;padding:15px 40px;font-size:1.1em;border-radius:10px;cursor:pointer;transition:all 0.3s ease;margin:10px;text-decoration:none;display:inline-block;}.btn:hover{background:#4752c4;transform:translateY(-2px);box-shadow:0 5px 15px rgba(88,101,242,0.4);}.success{display:none;color:#10b981;margin-top:15px;font-weight:bold;}.success.show{display:block;}</style></head><body><div class="container"><h1>Discord Invite</h1><p style="color:#666;margin-bottom:20px;">Click to copy invite link</p><div class="invite-link">discord.gg/rTw5M8dRXN</div><button class="btn" onclick="copyInvite()">Copy Invite</button><a href="https://discord.gg/rTw5M8dRXN" target="_blank" class="btn" style="background:#57F287;">Join Discord</a><p class="success" id="successMsg">Copied to clipboard!</p></div><script>function copyInvite(){navigator.clipboard.writeText("discord.gg/rTw5M8dRXN").then(function(){document.getElementById("successMsg").classList.add("show");setTimeout(function(){document.getElementById("successMsg").classList.remove("show");},2000);});}</script></body></html>';
-}
+    const html = '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>' + title + '</title><link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAADy0lEQVR4nO2WS0hUYRTHf2M6lqZhD8tKSyN6kFZEQUG0iYyWEbWoaBERRJuIoCKKNkEv2hQF0aZVUBAtIqhFGxFaBEVBQS8qoqKgJXrYI7PU+cU/nAvD3DszdzozC/3hcDnf+b7v/z/n+873QQwxxBBDDP8TKvU+oMeBcWASUA0MAZ1AC3AZaARqgJ+FIq8GpoX4O4E2oBjYIbNVgDOW4xfgIzAb+FYI8m/AVgkfBwYDCp4BPgEXBY5jBJgLfMk3+VdgcwD5BkkdayjAD+A1cBbYKOcYO6OI2bpbMX5IOc4Gg6GYCw4g/wAsCCj4NxFqBRYBpZLvJnBKxJYCt4DbGtsl40xgrp7pAY7oed+Bq8AO5a+RvleApXHyTqBcAs2RZs8Ak3Vi3QJuKl4m+ZPA7pjE7wCLJfs4UKbYOhE5DkwR+V6gOoZ/HLhL27BfRNqjvO/2Jvy25C+MyVrVy4M+S2kOINIi4l3AsAjYqP1kld9Sng9Yqfh7gRUx8veUo0vE20TgUwD5tpC39U/EbEEb4Q2RfCfkZ5RjtdK9l1n3gE0BzzdJb6LGfEUtIrNd5O1mM3AKgaFqDiNfIeJPFesMEBjnSjCq+VcapnxJ+Zoljj39p8DKgOftkk4fSqMqwG5+x0WyXaTd0uuLIl+iyzn
