@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>kick library - documentation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            background: #0d1117;
+            color: #e6edf3;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            border-bottom: 1px solid #21262d;
+            padding-bottom: 30px;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #e6edf3;
+        }
+
+        .subtitle {
+            color: #7d8590;
+            font-size: 1rem;
+        }
+
+        section {
+            margin-bottom: 50px;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #e6edf3;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #21262d;
+        }
+
+        .description {
+            color: #7d8590;
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+        }
+
+        .code-wrapper {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            margin: 16px 0;
+            overflow: hidden;
+        }
+
+        .code-header {
+            background: #0d1117;
+            padding: 12px 16px;
+            border-bottom: 1px solid #30363d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .language {
+            color: #7d8590;
+            font-size: 0.85rem;
+            font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+        }
+
+        .copy-btn {
+            background: transparent;
+            border: 1px solid #30363d;
+            color: #7d8590;
+            padding: 5px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: #30363d;
+            border-color: #7d8590;
+        }
+
+        .copy-btn.copied {
+            color: #3fb950;
+            border-color: #3fb950;
+        }
+
+        pre {
+            padding: 16px;
+            overflow-x: auto;
+            margin: 0;
+        }
+
+        code {
+            font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+            font-size: 0.875rem;
+            line-height: 1.6;
+            color: #e6edf3;
+        }
+
+        .keyword { color: #ff7b72; }
+        .string { color: #a5d6ff; }
+        .function { color: #d2a8ff; }
+        .comment { color: #8b949e; }
+        .property { color: #79c0ff; }
+        .punctuation { color: #e6edf3; }
+
+        .info-box {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-left: 3px solid #58a6ff;
+            padding: 16px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+
+        .info-box-title {
+            color: #58a6ff;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        .info-box-content {
+            color: #7d8590;
+            font-size: 0.9rem;
+        }
+
+        .info-box-content strong {
+            color: #e6edf3;
+        }
+
+        footer {
+            border-top: 1px solid #21262d;
+            padding-top: 30px;
+            margin-top: 60px;
+            color: #7d8590;
+            font-size: 0.9rem;
+        }
+
+        .credits-title {
+            font-weight: 600;
+            color: #e6edf3;
+            margin-bottom: 8px;
+        }
+
+        a {
+            color: #58a6ff;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 16px;
+            }
+
+            h1 {
+                font-size: 1.75rem;
+            }
+
+            h2 {
+                font-size: 1.25rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>kick library</h1>
+            <p class="subtitle">a powerful kick screen library for roblox</p>
+        </header>
+
+        <section>
+            <h2>booting the library</h2>
+            <p class="description">load the library using the following code snippet</p>
+            <div class="code-wrapper">
+                <div class="code-header">
+                    <span class="language">lua</span>
+                    <button class="copy-btn" onclick="copyCode(this, 'code1')">copy</button>
+                </div>
+                <pre><code id="code1"><span class="function">loadstring</span><span class="punctuation">(</span><span class="property">game</span><span class="punctuation">:</span><span class="function">HttpGet</span><span class="punctuation">(</span><span class="string">"https://egirlswow.pages.dev/libs/kick/source.lua"</span><span class="punctuation">))()</span></code></pre>
+            </div>
+        </section>
+
+        <section>
+            <h2>configure the settings</h2>
+            <p class="description">customize the kick screen appearance and behavior</p>
+            <div class="code-wrapper">
+                <div class="code-header">
+                    <span class="language">lua</span>
+                    <button class="copy-btn" onclick="copyCode(this, 'code2')">copy</button>
+                </div>
+                <pre><code id="code2"><span class="function">getgenv</span><span class="punctuation">().</span><span class="property">Config</span> <span class="punctuation">=</span> <span class="punctuation">{</span>
+    <span class="property">title</span> <span class="punctuation">=</span> <span class="string">"Disconnected"</span><span class="punctuation">,</span>
+    <span class="property">message</span> <span class="punctuation">=</span> <span class="string">"You have been kicked from this experience."</span><span class="punctuation">,</span>
+    <span class="property">type</span> <span class="punctuation">=</span> <span class="string">"1"</span><span class="punctuation">,</span> <span class="comment">-- types: 1 = only leave button, 2 = leave and reconnect buttons</span>
+    <span class="property">button1</span> <span class="punctuation">=</span> <span class="string">"Leave"</span><span class="punctuation">,</span>
+    <span class="property">button2</span> <span class="punctuation">=</span> <span class="string">"Reconnect"</span>
+<span class="punctuation">}</span></code></pre>
+            </div>
+
+            <div class="info-box">
+                <div class="info-box-title">configuration options</div>
+                <div class="info-box-content">
+                    <strong>type "1":</strong> displays only the leave button<br>
+                    <strong>type "2":</strong> displays both leave and reconnect buttons
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>button callbacks</h2>
+            <p class="description">define what happens when buttons are clicked</p>
+            <div class="code-wrapper">
+                <div class="code-header">
+                    <span class="language">lua</span>
+                    <button class="copy-btn" onclick="copyCode(this, 'code3')">copy</button>
+                </div>
+                <pre><code id="code3"><span class="function">getgenv</span><span class="punctuation">().</span><span class="property">Callbacks</span> <span class="punctuation">=</span> <span class="punctuation">{</span>
+    <span class="property">button1_callback</span> <span class="punctuation">=</span> <span class="keyword">function</span><span class="punctuation">()</span>
+        <span class="property">game</span><span class="punctuation">:</span><span class="function">Shutdown</span><span class="punctuation">()</span> <span class="comment">-- leave</span>
+    <span class="keyword">end</span><span class="punctuation">,</span>
+    <span class="property">button2_callback</span> <span class="punctuation">=</span> <span class="keyword">function</span><span class="punctuation">()</span>
+        <span class="property">game</span><span class="punctuation">:</span><span class="function">GetService</span><span class="punctuation">(</span><span class="string">"TeleportService"</span><span class="punctuation">):</span><span class="function">Teleport</span><span class="punctuation">(</span><span class="property">game</span><span class="punctuation">.</span><span class="property">PlaceId</span><span class="punctuation">)</span> <span class="comment">-- reconnect</span>
+    <span class="keyword">end</span>
+<span class="punctuation">}</span></code></pre>
+            </div>
+        </section>
+
+        <footer>
+            <div class="credits-title">credits</div>
+            <p>library created by <a href="https://github.com/EnesXVC" target="_blank">EnesXVC</a></p>
+        </footer>
+    </div>
+
+    <script>
+        function copyCode(button, codeId) {
+            const codeElement = document.getElementById(codeId);
+            const code = codeElement.innerText;
+            
+            navigator.clipboard.writeText(code).then(() => {
+                button.textContent = 'copied!';
+                button.classList.add('copied');
+                setTimeout(() => {
+                    button.textContent = 'copy';
+                    button.classList.remove('copied');
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
