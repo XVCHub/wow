@@ -5,6 +5,7 @@ const FOLDER_ROUTES = {
   '👅': 'images',
   'cracks': 'cracks',
   'libs/kick': 'libs/kick'
+  'docs/kicklib': 'docs/kicklib'
 };
 
 export async function onRequest(context) {
