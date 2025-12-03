@@ -3,8 +3,8 @@ const GITHUB_BRANCH = 'main';
 
 const FOLDER_ROUTES = {
   '👅': 'images',
-  'cracks': 'cracks'
-  'libs': 'libs/kick'
+  'cracks': 'cracks',
+  'libs/kick': 'libs/kick'
 };
 
 export async function onRequest(context) {
