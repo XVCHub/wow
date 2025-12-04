@@ -1,0 +1,189 @@
+local DevConsoleCopy = {}
+DevConsoleCopy.Enabled = false
+
+local CoreGui = game:GetService("CoreGui")
+local RS = game:GetService("RunService")
+local TextService = game:GetService("TextService")
+
+local connections = {}
+local createdButtons = {}
+
+local function createCopyButton(textLabel)
+	if textLabel:FindFirstChild("CopyBtn") then
+		return
+	end
+	
+	local copyBtn = Instance.new("TextButton")
+	copyBtn.Name = "CopyBtn"
+	copyBtn.Size = UDim2.new(0, 30, 0, 20)
+	copyBtn.BackgroundTransparency = 1
+	copyBtn.Text = "[C]"
+	copyBtn.TextColor3 = textLabel.TextColor3
+	copyBtn.Font = textLabel.Font
+	copyBtn.TextSize = textLabel.TextSize
+	copyBtn.TextTransparency = 0.5
+	copyBtn.TextXAlignment = Enum.TextXAlignment.Left
+	copyBtn.Parent = textLabel
+	
+	table.insert(createdButtons, copyBtn)
+	
+	local renderConn
+	renderConn = RS.RenderStepped:Connect(function()
+		if not copyBtn.Parent then
+			renderConn:Disconnect()
+			return
+		end
+		
+		local textBounds = textLabel.TextBounds
+		if textBounds.X > 0 then
+			copyBtn.AnchorPoint = Vector2.new(0, 0.5)
+			if string.find(textLabel.Text, "\n") then
+				local lastLine = textLabel.Text:match("([^\n]*)$")
+				local lineSize = TextService:GetTextSize(lastLine, textLabel.TextSize, textLabel.Font, Vector2.new(textLabel.AbsoluteSize.X, math.huge))
+				copyBtn.Position = UDim2.new(0, lineSize.X + 5, 1, -textLabel.TextSize / 2)
+			else
+				copyBtn.Position = UDim2.new(0, textBounds.X + 5, 0.5, 0)
+			end
+			renderConn:Disconnect()
+		end
+	end)
+	
+	table.insert(connections, renderConn)
+	
+	local mouseEnterConn = copyBtn.MouseEnter:Connect(function()
+		copyBtn.TextTransparency = 0
+	end)
+	
+	local mouseLeaveConn = copyBtn.MouseLeave:Connect(function()
+		copyBtn.TextTransparency = .5
+	end)
+	
+	local clickConn = copyBtn.MouseButton1Click:Connect(function()
+		local text = textLabel.Text
+		if #text > 11 then
+			text = text:sub(12)
+		end
+		setclipboard(text)
+		copyBtn.Text = "[✓]"
+		task.wait(0.3)
+		copyBtn.Text = "[C]"
+	end)
+	
+	table.insert(connections, mouseEnterConn)
+	table.insert(connections, mouseLeaveConn)
+	table.insert(connections, clickConn)
+end
+
+local function processDescendants(container)
+	for _, descendant in pairs(container:GetDescendants()) do
+		if descendant:IsA("TextLabel") and not descendant:FindFirstChild("CopyBtn") then
+			createCopyButton(descendant)
+		end
+	end
+end
+
+local function setupDevConsole()
+	local devConsoleMaster = CoreGui:FindFirstChild("DevConsoleMaster")
+	if not devConsoleMaster then
+		return
+	end
+	
+	local devConsoleWindow = devConsoleMaster:FindFirstChild("DevConsoleWindow")
+	if not devConsoleWindow then
+		return
+	end
+	
+	local devConsoleUI = devConsoleWindow:FindFirstChild("DevConsoleUI")
+	if not devConsoleUI then
+		return
+	end
+	
+	local mainView = devConsoleUI:FindFirstChild("MainView")
+	if not mainView then
+		return
+	end
+	
+	local clientLog = mainView:FindFirstChild("ClientLog")
+	if not clientLog then
+		return
+	end
+	
+	for _, child in pairs(clientLog:GetChildren()) do
+		if child:IsA("Frame") or child:IsA("ScrollingFrame") then
+			processDescendants(child)
+		end
+	end
+	
+	local childAddedConn = clientLog.ChildAdded:Connect(function(child)
+		task.wait(.15)
+		if child then
+			processDescendants(child)
+		end
+	end)
+	
+	local descendantAddedConn = clientLog.DescendantAdded:Connect(function(descendant)
+		if descendant:IsA("TextLabel") and not descendant:FindFirstChild("CopyBtn") then
+			task.wait(.05)
+			createCopyButton(descendant)
+		end
+	end)
+	
+	table.insert(connections, childAddedConn)
+	table.insert(connections, descendantAddedConn)
+end
+
+local heartbeatConn
+local checkTimer = 0
+
+function DevConsoleCopy:Enable()
+	if self.Enabled then
+		return
+	end
+	self.Enabled = true
+	
+	setupDevConsole()
+	
+	heartbeatConn = RS.Heartbeat:Connect(function(dt)
+		checkTimer = checkTimer + dt
+		if checkTimer > 1 then
+			checkTimer = 0
+			local devConsoleMaster = CoreGui:FindFirstChild("DevConsoleMaster")
+			if devConsoleMaster and devConsoleMaster:FindFirstChild("DevConsoleWindow") then
+				setupDevConsole()
+			end
+		end
+	end)
+end
+
+function DevConsoleCopy:Disable()
+	if not self.Enabled then
+		return
+	end
+	self.Enabled = false
+	
+	if heartbeatConn then
+		heartbeatConn:Disconnect()
+		heartbeatConn = nil
+	end
+	
+	for _, conn in ipairs(connections) do
+		pcall(function()
+			if conn and typeof(conn) == "RBXScriptConnection" then
+				conn:Disconnect()
+			end
+		end)
+	end
+	connections = {}
+	
+	for _, button in ipairs(createdButtons) do
+		pcall(function()
+			if button and button.Parent then
+				button:Destroy()
+			end
+		end)
+	end
+	createdButtons = {}
+	
+	checkTimer = 0
+end
+return DevConsoleCopy
