@@ -60,8 +60,8 @@ local function createCopyButton(textLabel)
 	
 	local clickConn = copyBtn.MouseButton1Click:Connect(function()
 		local text = textLabel.Text
-		if #text > 11 then
-			text = text:sub(12)
+		if #text > 13 then
+			text = text:sub(13)
 		end
 		setclipboard(text)
 		copyBtn.Text = "[✓]"
