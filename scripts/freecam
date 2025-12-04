@@ -203,7 +203,7 @@ local cameraPos = Vector3.new()
 local cameraRot = Vector2.new()
 local cameraFov = 0
 
-local function StepFreecamPC(dt)
+local function StepFreecam(dt)
 	local vel = velSpring:Update(dt, Input.Vel(dt))
 	local pan = panSpring:Update(dt, Input.Pan())
 	local fov = fovSpring:Update(dt, Input.Fov())
@@ -221,8 +221,6 @@ local function StepFreecamPC(dt)
 end
 
 local function StepFreecamMobile(dt)
-	Camera.CameraType = Enum.CameraType.Scriptable
-	
 	if rotationTouch then
 		local mouseDelta = UIS:GetMouseDelta()
 		
@@ -255,10 +253,10 @@ local function StepFreecamMobile(dt)
 	
 	Camera.CFrame = cameraCF
 	Camera.Focus = cameraCF
+	Camera.FieldOfView = cameraFov
 end
 
 local savedProps = {}
-local playerModule
 
 function FreeCam:Enable()
 	if self.Enabled then return end
@@ -270,34 +268,25 @@ function FreeCam:Enable()
 	savedProps.CFrame = Camera.CFrame
 	savedProps.Focus = Camera.Focus
 	
-	if LP.Character and LP.Character:FindFirstChild("Humanoid") then
-		savedProps.WalkSpeed = LP.Character.Humanoid.WalkSpeed
-		LP.Character.Humanoid.WalkSpeed = 0
-	end
-	
 	local cf = Camera.CFrame
 	cameraRot = Vector2.new(cf:toEulerAnglesYXZ())
 	cameraPos = cf.p
 	cameraFov = Camera.FieldOfView
 	
-	Camera.CameraType = Enum.CameraType.Scriptable
+	velSpring:Reset(Vector3.new())
+	panSpring:Reset(Vector2.new())
+	fovSpring:Reset(0)
+	
+	Camera.CameraType = Enum.CameraType.Custom
 	Camera.CameraSubject = nil
 	Camera.FieldOfView = 70
-	
-	pcall(function()
-		playerModule = require(LP.PlayerScripts:WaitForChild("PlayerModule"))
-		playerModule:GetControls():Disable()
-	end)
 	
 	if IS_MOBILE then
 		MobileInput.StartCapture()
 		RS:BindToRenderStep("Freecam", Enum.RenderPriority.Camera.Value, StepFreecamMobile)
 	else
-		velSpring:Reset(Vector3.new())
-		panSpring:Reset(Vector2.new())
-		fovSpring:Reset(0)
+		RS:BindToRenderStep("Freecam", Enum.RenderPriority.Camera.Value, StepFreecam)
 		Input.StartCapture()
-		RS:BindToRenderStep("Freecam", Enum.RenderPriority.Camera.Value, StepFreecamPC)
 	end
 end
 
@@ -305,39 +294,14 @@ function FreeCam:Disable()
 	if not self.Enabled then return end
 	self.Enabled = false
 	
+	Input.StopCapture()
 	RS:UnbindFromRenderStep("Freecam")
-	
-	if IS_MOBILE then
-		rotationTouch = nil
-		movementTouch = nil
-		touchStartPos = nil
-		for k in pairs(mobileKeys) do
-			mobileKeys[k] = false
-		end
-		pcall(function()
-			if playerModule then
-				playerModule:GetControls():Enable()
-			end
-		end)
-	else
-		Input.StopCapture()
-	end
-	
-	if LP.Character and LP.Character:FindFirstChild("Humanoid") and savedProps.WalkSpeed then
-		LP.Character.Humanoid.WalkSpeed = savedProps.WalkSpeed
-	end
 	
 	Camera.CameraType = savedProps.CameraType
 	Camera.CameraSubject = savedProps.CameraSubject
 	Camera.FieldOfView = savedProps.FieldOfView
 	Camera.CFrame = savedProps.CFrame
 	Camera.Focus = savedProps.Focus
-	
-	pcall(function()
-		if playerModule then
-			playerModule:GetControls():Enable()
-		end
-	end)
 end
 
 return FreeCam
