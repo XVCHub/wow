@@ -270,12 +270,17 @@ function FreeCam:Enable()
 	savedProps.CFrame = Camera.CFrame
 	savedProps.Focus = Camera.Focus
 	
+	if LP.Character and LP.Character:FindFirstChild("Humanoid") then
+		savedProps.WalkSpeed = LP.Character.Humanoid.WalkSpeed
+		LP.Character.Humanoid.WalkSpeed = 0
+	end
+	
 	local cf = Camera.CFrame
 	cameraRot = Vector2.new(cf:toEulerAnglesYXZ())
 	cameraPos = cf.p
 	cameraFov = Camera.FieldOfView
 	
-	Camera.CameraType = Enum.CameraType.Custom
+	Camera.CameraType = Enum.CameraType.Scriptable
 	Camera.CameraSubject = nil
 	Camera.FieldOfView = 70
 	
@@ -318,11 +323,21 @@ function FreeCam:Disable()
 		Input.StopCapture()
 	end
 	
+	if LP.Character and LP.Character:FindFirstChild("Humanoid") and savedProps.WalkSpeed then
+		LP.Character.Humanoid.WalkSpeed = savedProps.WalkSpeed
+	end
+	
 	Camera.CameraType = savedProps.CameraType
 	Camera.CameraSubject = savedProps.CameraSubject
 	Camera.FieldOfView = savedProps.FieldOfView
 	Camera.CFrame = savedProps.CFrame
 	Camera.Focus = savedProps.Focus
+	
+	pcall(function()
+		if playerModule then
+			playerModule:GetControls():Enable()
+		end
+	end)
 end
 
 return FreeCam
