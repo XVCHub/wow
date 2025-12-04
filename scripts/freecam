@@ -19,6 +19,8 @@ local UIS = game:GetService("UserInputService")
 local LP = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
+local IS_MOBILE = not UIS.KeyboardEnabled
+
 local Spring = {}
 Spring.__index = Spring
 
@@ -58,17 +60,6 @@ local PAN_MOUSE_SPEED = Vector2.new(0.75, 1) * 8
 local FOV_WHEEL_SPEED = 300
 local MAX_PITCH = RAD(90)
 
-local gamepad = {
-	ButtonX = 0,
-	ButtonY = 0,
-	DPadDown = 0,
-	DPadUp = 0,
-	ButtonL2 = 0,
-	ButtonR2 = 0,
-	Thumbstick1 = Vector2.new(),
-	Thumbstick2 = Vector2.new()
-}
-
 local keyboard = {
 	W = 0, A = 0, S = 0, D = 0, E = 0, Q = 0,
 	U = 0, H = 0, J = 0, K = 0, I = 0, Y = 0,
@@ -79,10 +70,6 @@ local mouse = {
 	Delta = Vector2.new(),
 	MouseWheel = 0
 }
-
-local function Axis(n)
-	return SIGN(n) * CLAMP(ABS(n) - 0.15, 0, 1) / 0.85
-end
 
 function Input.Vel(dt)
 	local kSpeed = Vector3.new(keyboard.D - keyboard.A, keyboard.E - keyboard.Q, keyboard.S - keyboard.W)
@@ -131,11 +118,92 @@ function Input.StopCapture()
 	for k in pairs(mouse) do mouse[k] = type(mouse[k]) == "number" and 0 or Vector2.new() end
 end
 
+local MobileInput = {}
+local mobileKeys = {}
+local rotationTouch = nil
+local movementTouch = nil
+local touchStartPos = nil
+local MOBILE_MOVE_SPEED = 0.8
+local MOBILE_SENSITIVITY = 0.01
+
+function MobileInput.StartCapture()
+	UIS.InputBegan:Connect(function(input, processed)
+		if not FreeCam.Enabled then return end
+		
+		if input.UserInputType == Enum.UserInputType.Touch then
+			local screenWidth = Camera.ViewportSize.X
+			
+			if input.Position.X > screenWidth / 2 then
+				if not rotationTouch then
+					rotationTouch = input
+				end
+			else
+				if not movementTouch then
+					movementTouch = input
+					touchStartPos = input.Position
+				end
+			end
+		end
+	end)
+	
+	UIS.InputEnded:Connect(function(input, processed)
+		if not FreeCam.Enabled then return end
+		
+		if input.UserInputType == Enum.UserInputType.Touch then
+			if rotationTouch and input == rotationTouch then
+				rotationTouch = nil
+			end
+			
+			if movementTouch and input == movementTouch then
+				movementTouch = nil
+				touchStartPos = nil
+				mobileKeys["W"] = false
+				mobileKeys["A"] = false
+				mobileKeys["S"] = false
+				mobileKeys["D"] = false
+			end
+		end
+	end)
+	
+	UIS.InputChanged:Connect(function(input, processed)
+		if not FreeCam.Enabled then return end
+		
+		if input.UserInputType == Enum.UserInputType.Touch then
+			if movementTouch and input == movementTouch and touchStartPos then
+				local deltaY = input.Position.Y - touchStartPos.Y
+				local deltaX = input.Position.X - touchStartPos.X
+				
+				if deltaY < -25 then
+					mobileKeys["W"] = true
+					mobileKeys["S"] = false
+				elseif deltaY > 25 then
+					mobileKeys["W"] = false
+					mobileKeys["S"] = true
+				else
+					mobileKeys["W"] = false
+					mobileKeys["S"] = false
+				end
+				
+				if deltaX < -25 then
+					mobileKeys["A"] = true
+					mobileKeys["D"] = false
+				elseif deltaX > 25 then
+					mobileKeys["A"] = false
+					mobileKeys["D"] = true
+				else
+					mobileKeys["A"] = false
+					mobileKeys["D"] = false
+				end
+			end
+		end
+	end)
+end
+
 local cameraPos = Vector3.new()
 local cameraRot = Vector2.new()
 local cameraFov = 0
 
-local function StepFreecam(dt)
+local function StepFreecamPC(dt)
 	local vel = velSpring:Update(dt, Input.Vel(dt))
 	local pan = panSpring:Update(dt, Input.Pan())
 	local fov = fovSpring:Update(dt, Input.Fov())
@@ -152,7 +220,45 @@ local function StepFreecam(dt)
 	Camera.FieldOfView = cameraFov
 end
 
+local function StepFreecamMobile(dt)
+	Camera.CameraType = Enum.CameraType.Scriptable
+	
+	if rotationTouch then
+		local mouseDelta = UIS:GetMouseDelta()
+		
+		cameraRot = cameraRot + Vector2.new(-mouseDelta.Y * MOBILE_SENSITIVITY, -mouseDelta.X * MOBILE_SENSITIVITY)
+		cameraRot = Vector2.new(CLAMP(cameraRot.X, -1.5, 1.5), cameraRot.Y)
+	end
+	
+	local moveSpeed = MOBILE_MOVE_SPEED
+	local moveVector = Vector3.zero
+	
+	if mobileKeys["W"] then
+		moveVector = moveVector + Vector3.new(0, 0, -1)
+	end
+	if mobileKeys["S"] then
+		moveVector = moveVector + Vector3.new(0, 0, 1)
+	end
+	if mobileKeys["A"] then
+		moveVector = moveVector + Vector3.new(-1, 0, 0)
+	end
+	if mobileKeys["D"] then
+		moveVector = moveVector + Vector3.new(1, 0, 0)
+	end
+	
+	if moveVector.Magnitude > 0 then
+		moveVector = moveVector.Unit * moveSpeed
+	end
+	
+	local cameraCF = CFrame.new(cameraPos) * CFrame.fromOrientation(cameraRot.X, cameraRot.Y, 0)
+	cameraPos = (cameraCF * CFrame.new(moveVector)).Position
+	
+	Camera.CFrame = cameraCF
+	Camera.Focus = cameraCF
+end
+
 local savedProps = {}
+local playerModule
 
 function FreeCam:Enable()
 	if self.Enabled then return end
@@ -169,24 +275,48 @@ function FreeCam:Enable()
 	cameraPos = cf.p
 	cameraFov = Camera.FieldOfView
 	
-	velSpring:Reset(Vector3.new())
-	panSpring:Reset(Vector2.new())
-	fovSpring:Reset(0)
-	
 	Camera.CameraType = Enum.CameraType.Custom
 	Camera.CameraSubject = nil
 	Camera.FieldOfView = 70
 	
-	RS:BindToRenderStep("Freecam", Enum.RenderPriority.Camera.Value, StepFreecam)
-	Input.StartCapture()
+	pcall(function()
+		playerModule = require(LP.PlayerScripts:WaitForChild("PlayerModule"))
+		playerModule:GetControls():Disable()
+	end)
+	
+	if IS_MOBILE then
+		MobileInput.StartCapture()
+		RS:BindToRenderStep("Freecam", Enum.RenderPriority.Camera.Value, StepFreecamMobile)
+	else
+		velSpring:Reset(Vector3.new())
+		panSpring:Reset(Vector2.new())
+		fovSpring:Reset(0)
+		Input.StartCapture()
+		RS:BindToRenderStep("Freecam", Enum.RenderPriority.Camera.Value, StepFreecamPC)
+	end
 end
 
 function FreeCam:Disable()
 	if not self.Enabled then return end
 	self.Enabled = false
 	
-	Input.StopCapture()
 	RS:UnbindFromRenderStep("Freecam")
+	
+	if IS_MOBILE then
+		rotationTouch = nil
+		movementTouch = nil
+		touchStartPos = nil
+		for k in pairs(mobileKeys) do
+			mobileKeys[k] = false
+		end
+		pcall(function()
+			if playerModule then
+				playerModule:GetControls():Enable()
+			end
+		end)
+	else
+		Input.StopCapture()
+	end
 	
 	Camera.CameraType = savedProps.CameraType
 	Camera.CameraSubject = savedProps.CameraSubject
