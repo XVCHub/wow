@@ -5,6 +5,7 @@ const FOLDER_ROUTES = {
   '👅': 'images',
   'cracks': 'cracks',
   'libs/kick': 'libs/kick',
+  'libs/luarmorconsole': 'libs/luarmorconsole',
   'docs/kicklib': 'docs/kicklib'
 };
 
