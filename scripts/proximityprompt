@@ -1,0 +1,42 @@
+local ProximityPromptModule = {}
+local connections = {}
+local isEnabled = false
+local originalDurations = {}
+
+function ProximityPromptModule:Enable()
+	if isEnabled then return end
+	isEnabled = true
+	for _, v in next, game:GetDescendants() do
+		if v:IsA("ProximityPrompt") then
+			if not originalDurations[v] then
+				originalDurations[v] = v.HoldDuration
+			end
+			v.HoldDuration = 0
+		end
+	end
+	connections.descendantAdded = game.DescendantAdded:Connect(function(d)
+		if isEnabled and d:IsA("ProximityPrompt") then
+			if not originalDurations[d] then
+				originalDurations[d] = d.HoldDuration
+			end
+			d.HoldDuration = 0
+		end
+	end)
+end
+
+function ProximityPromptModule:Disable()
+	if not isEnabled then return end
+	isEnabled = false
+	if connections.descendantAdded then
+		connections.descendantAdded:Disconnect()
+		connections.descendantAdded = nil
+	end
+	for prompt, duration in pairs(originalDurations) do
+		if prompt and prompt.Parent then
+			prompt.HoldDuration = duration
+		end
+	end
+	originalDurations = {}
+end
+
+return ProximityPromptModule
