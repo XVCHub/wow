@@ -1,0 +1,93 @@
+local DTCProtection = {}
+DTCProtection.Enabled = false
+
+local raw_print = print
+local raw_warn = warn
+local raw_error = error
+
+local detected = false
+local hooksInitialized = false
+
+local function DTC()
+	if not DTCProtection.Enabled then return end
+	if detected then return end
+	detected = true
+	game:GetService("Players").LocalPlayer:Kick("dtc")
+end
+
+local function initHooks()
+	if hooksInitialized then return end
+	hooksInitialized = true
+
+	hookfunction(print, function(msg)
+		if DTCProtection.Enabled and typeof(msg) == "string" and string.find(msg:lower(), "http") then
+			DTC()
+		end
+		return raw_print(msg)
+	end)
+
+	hookfunction(warn, function(msg)
+		if DTCProtection.Enabled and typeof(msg) == "string" and string.find(msg:lower(), "http") then
+			DTC()
+		end
+		return raw_warn(msg)
+	end)
+
+	hookfunction(error, function(msg)
+		if DTCProtection.Enabled and typeof(msg) == "string" and string.find(msg:lower(), "http") then
+			DTC()
+		end
+		return raw_error(msg)
+	end)
+
+	hookfunction(writefile, function(_, data)
+		if DTCProtection.Enabled and typeof(data) == "string" and (
+			string.find(data:lower(), "http") or
+			string.find(data:lower(), "discord.com/api/webhooks")
+		) then
+			DTC()
+		end
+	end)
+
+	hookfunction(appendfile, function(_, data)
+		if DTCProtection.Enabled and typeof(data) == "string" and (
+			string.find(data:lower(), "http") or
+			string.find(data:lower(), "discord.com/api/webhooks")
+		) then
+			DTC()
+		end
+	end)
+
+	game.DescendantAdded:Connect(function(obj)
+		if not DTCProtection.Enabled then return end
+		if obj:IsA("TextLabel") or obj:IsA("TextButton") then
+			if obj.Text and string.find(obj.Text:lower(), "http") then
+				DTC()
+			end
+		end
+	end)
+
+	task.spawn(function()
+		while true do
+			if DTCProtection.Enabled and not detected then
+				
+			end
+			task.wait(1)
+		end
+	end)
+end
+
+function DTCProtection:Enable()
+	if self.Enabled then return end
+	self.Enabled = true
+	detected = false
+	initHooks()
+end
+
+function DTCProtection:Disable()
+	if not self.Enabled then return end
+	self.Enabled = false
+	detected = false
+end
+
+return DTCProtection
