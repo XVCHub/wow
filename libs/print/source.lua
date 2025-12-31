@@ -31,31 +31,43 @@ end
 local texts={}
 local TIME=0
 
+local text_mt={
+    __index=function(self,k)
+        if k=="Text" then
+            return function(t)self.text=t end
+        elseif k=="Color" then
+            return function(c)self.color=c end
+        elseif k=="Colors" then
+            return function(...)self.colors={...}end
+        elseif k=="Gradient" then
+            return function(f,t)self.colors={f,t}end
+        elseif k=="Set" then
+            return function(opt)
+                if opt.Text then self.text=opt.Text end
+                if opt.Color then self.color=opt.Color end
+                if opt.Colors then self.colors=opt.Colors end
+                if opt.Gradient then self.colors=opt.Gradient end
+                if opt.Speed then self.speed=opt.Speed end
+                if opt.RGB~=nil then self.rgb=opt.RGB end
+            end
+        end
+    end
+}
+
 function M.print(...)
     local args={...}
     for i,v in args do args[i]=tostring(v) end
     local id="25ms"..tostring(math.random())
     print(id)
-    texts[id]={
+    local obj=setmetatable({
         text=table.concat(args,""),
         color=Color3.new(0,1,0),
         colors=nil,
         rgb=false,
-        speed=2,
-        Text=function(self,t)self.text=t end,
-        Color=function(self,c)self.color=c end,
-        Colors=function(self,...)self.colors={...}end,
-        Gradient=function(self,f,t)self.colors={f,t}end,
-        Set=function(self,opt)
-            if opt.Text then self.text=opt.Text end
-            if opt.Color then self.color=opt.Color end
-            if opt.Colors then self.colors=opt.Colors end
-            if opt.Gradient then self.colors=opt.Gradient end
-            if opt.Speed then self.speed=opt.Speed end
-            if opt.RGB~=nil then self.rgb=opt.RGB end
-        end
-    }
-    return texts[id]
+        speed=2
+    },text_mt)
+    texts[id]=obj
+    return obj
 end
 
 services.RunService.Heartbeat:Connect(function(dt)
