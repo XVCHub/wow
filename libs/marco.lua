@@ -1,141 +1,138 @@
-local vu29 = {windowcount = 0}
-local vu30 = {}
-local vu31 = {}
-local vu32 = game:GetService('Players').LocalPlayer:GetMouse()
-local vu33 = game:GetService('UserInputService')
-local vu34 = game:GetService('RunService').Heartbeat
+local LIB = {windowcount = 0}
+local DRAG = {}
+local RESIZE = {}
+local MOUSE = game:GetService('Players').LocalPlayer:GetMouse()
+local UIS = game:GetService('UserInputService')
+local HEARTBEAT = game:GetService('RunService').Heartbeat
 
-function vu30.new(pu35)
-    local v36, v37 = pcall(function()
-        return pu35.MouseEnter
-    end)
-
-    if v36 then
-        pu35.Active = true
-
-        v37:connect(function()
-            local vu40 = pu35.InputBegan:connect(function(p38)
-                if p38.UserInputType == Enum.UserInputType.MouseButton1 or p38.UserInputType == Enum.UserInputType.Touch then
-                    local v39 = Vector2.new(vu32.X - pu35.AbsolutePosition.X, vu32.Y - pu35.AbsolutePosition.Y)
-
-                    while vu34:wait() and vu33:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) do
-                        pu35:TweenPosition(UDim2.new(0, vu32.X - v39.X + pu35.Size.X.Offset * pu35.AnchorPoint.X, 0, vu32.Y - v39.Y + pu35.Size.Y.Offset * pu35.AnchorPoint.Y), 'Out', 'Quad', 0.1, true)
-                    end
-                end
-            end)
-            local vu41 = nil
-
-            vu41 = pu35.MouseLeave:connect(function()
-                vu40:disconnect()
-                vu41:disconnect()
-            end)
-        end)
-    end
-end
-function vu31.new(pu42, pu43)
-    pu42:GetPropertyChangedSignal('AbsoluteSize'):connect(function()
-        pu43.Size = UDim2.new(pu43.Size.X.Scale, pu43.Size.X.Offset, pu43.Size.Y.Scale, pu42.AbsoluteSize.Y)
-    end)
-end
-
-local vu44 = {
+local COLORS = {
     txtcolor = Color3.fromRGB(255, 255, 255),
     underline = Color3.fromRGB(0, 255, 140),
     barcolor = Color3.fromRGB(40, 40, 40),
     bgcolor = Color3.fromRGB(30, 30, 30),
 }
 
-function vu29.Create(_, p45, p46)
-    local v47 = Instance.new(p45)
-    local v48 = next
-    local v49 = p46
-    local v50 = nil
+function DRAG.new(frame)
+    local ok, enter = pcall(function()
+        return frame.MouseEnter
+    end)
 
-    while true do
-        local v51
+    if ok then
+        frame.Active = true
 
-        v50, v51 = v48(p46, v50)
+        enter:connect(function()
+            local started = frame.InputBegan:connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    local offset = Vector2.new(MOUSE.X - frame.AbsolutePosition.X, MOUSE.Y - frame.AbsolutePosition.Y)
 
-        if v50 == nil then
-            break
-        end
-        if v50 ~= 'Parent' then
-            v47[v50] = v51
+                    while HEARTBEAT:wait() and UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) do
+                        frame:TweenPosition(UDim2.new(0, MOUSE.X - offset.X + frame.Size.X.Offset * frame.AnchorPoint.X, 0, MOUSE.Y - offset.Y + frame.Size.Y.Offset * frame.AnchorPoint.Y), 'Out', 'Quad', 0.1, true)
+                    end
+                end
+            end)
+            local left
+
+            left = frame.MouseLeave:connect(function()
+                started:disconnect()
+                left:disconnect()
+            end)
+        end)
+    end
+end
+
+function RESIZE.new(parent, child)
+    parent:GetPropertyChangedSignal('AbsoluteSize'):connect(function()
+        child.Size = UDim2.new(child.Size.X.Scale, child.Size.X.Offset, child.Size.Y.Scale, parent.AbsoluteSize.Y)
+    end)
+end
+
+function LIB.Create(_, class, props)
+    local obj = Instance.new(class)
+    
+    for k, v in props do
+        if k ~= 'Parent' then
+            obj[k] = v
         end
     end
 
-    v47.Parent = v49.Parent
+    obj.Parent = props.Parent
 
-    return v47
+    return obj
 end
-function vu29.CreateWindow(p52, p53)
-    assert(p53.text, 'no name')
 
-    local vu54 = {
+function LIB.CreateWindow(self, config)
+    assert(config.text, 'window needs text')
+
+    local WIN = {
         count = 0,
         toggles = {},
         closed = false,
     }
-    local vu55 = p53 or {}
-    local v56 = {__index = vu44}
+    
+    local cfg = config or {}
+    setmetatable(cfg, {__index = COLORS})
 
-    setmetatable(vu55, v56)
-
-    p52.windowcount = p52.windowcount + 1
-    vu29.gui = vu29.gui or p52:Create('ScreenGui', {
+    self.windowcount += 1
+    
+    LIB.gui = LIB.gui or self:Create('ScreenGui', {
         Name = 'UILibrary',
         Parent = game:GetService('CoreGui'),
     })
-    vu54.frame = p52:Create('Frame', {
-        Name = vu55.text,
-        Parent = p52.gui,
+    
+    WIN.frame = self:Create('Frame', {
+        Name = cfg.text,
+        Parent = self.gui,
         Active = true,
         BackgroundTransparency = 0,
         Size = UDim2.new(0, 190, 0, 30),
-        Position = UDim2.new(0, 15 + (200 * p52.windowcount - 200), 0, 15),
-        BackgroundColor3 = vu55.barcolor,
+        Position = UDim2.new(0, 15 + (200 * self.windowcount - 200), 0, 15),
+        BackgroundColor3 = cfg.barcolor,
         BorderSizePixel = 0,
     })
-    vu54.background = p52:Create('Frame', {
+    
+    WIN.background = self:Create('Frame', {
         Name = 'Background',
-        Parent = vu54.frame,
+        Parent = WIN.frame,
         BorderSizePixel = 0,
-        BackgroundColor3 = vu55.bgcolor,
+        BackgroundColor3 = cfg.bgcolor,
         Position = UDim2.new(0, 0, 1, 0),
         Size = UDim2.new(1, 0, 0, 25),
         ClipsDescendants = true,
     })
-    vu54.container = p52:Create('Frame', {
+    
+    WIN.container = self:Create('Frame', {
         Name = 'Container',
-        Parent = vu54.frame,
+        Parent = WIN.frame,
         BorderSizePixel = 0,
-        BackgroundColor3 = vu55.bgcolor,
+        BackgroundColor3 = cfg.bgcolor,
         Position = UDim2.new(0, 0, 1, 0),
         Size = UDim2.new(1, 0, 0, 25),
         ClipsDescendants = true,
     })
-    vu54.organizer = p52:Create('UIListLayout', {
+    
+    WIN.organizer = self:Create('UIListLayout', {
         Name = 'Sorter',
         SortOrder = Enum.SortOrder.LayoutOrder,
-        Parent = vu54.container,
+        Parent = WIN.container,
     })
-    vu54.padder = p52:Create('UIPadding', {
+    
+    WIN.padder = self:Create('UIPadding', {
         Name = 'Padding',
         PaddingLeft = UDim.new(0, 10),
         PaddingTop = UDim.new(0, 5),
-        Parent = vu54.container,
+        Parent = WIN.container,
     })
 
-    p52:Create('Frame', {
+    self:Create('Frame', {
         Name = 'Underline',
         Size = UDim2.new(1, 0, 0, 1),
         Position = UDim2.new(0, 0, 1, -1),
         BorderSizePixel = 0,
-        BackgroundColor3 = vu55.underline,
-        Parent = vu54.frame,
+        BackgroundColor3 = cfg.underline,
+        Parent = WIN.frame,
     })
 
-    local vu57 = p52:Create('TextButton', {
+    local toggle = self:Create('TextButton', {
         Name = 'Toggle',
         ZIndex = 2,
         BackgroundTransparency = 1,
@@ -143,84 +140,79 @@ function vu29.CreateWindow(p52, p53)
         Size = UDim2.new(0, 25, 1, 0),
         Text = '-',
         TextSize = 17,
-        TextColor3 = vu55.txtcolor,
+        TextColor3 = cfg.txtcolor,
         Font = Enum.Font.FredokaOne,
-        Parent = vu54.frame,
+        Parent = WIN.frame,
     })
 
-    vu57.MouseButton1Click:connect(function()
-        vu54.closed = not vu54.closed
-        vu57.Text = vu54.closed and '+' or '-'
+    toggle.MouseButton1Click:connect(function()
+        WIN.closed = not WIN.closed
+        toggle.Text = WIN.closed and '+' or '-'
 
-        if vu54.closed then
-            vu54:Resize(true, UDim2.new(1, 0, 0, 0))
+        if WIN.closed then
+            WIN:Resize(true, UDim2.new(1, 0, 0, 0))
         else
-            vu54:Resize(true)
+            WIN:Resize(true)
         end
     end)
-    p52:Create('TextLabel', {
+    
+    self:Create('TextLabel', {
         Size = UDim2.new(1, 0, 1, 0),
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
-        TextColor3 = vu55.txtcolor,
-        TextColor3 = vu55.bartextcolor or Color3.fromRGB(255, 255, 255),
+        TextColor3 = cfg.txtcolor,
         TextSize = 17,
         Font = Enum.Font.FredokaOne,
-        Text = vu55.text or 'window',
+        Text = cfg.text or 'window',
         Name = 'Window',
-        Parent = vu54.frame,
+        Parent = WIN.frame,
     })
-    vu30.new(vu54.frame)
-    vu31.new(vu54.background, vu54.container)
+    
+    DRAG.new(WIN.frame)
+    RESIZE.new(WIN.background, WIN.container)
 
-    local function vu63()
-        local v58 = next
-        local v59, v60 = vu54.container:GetChildren()
-        local v61 = 0
+    local function getsize()
+        local total = 0
 
-        while true do
-            local v62
-
-            v60, v62 = v58(v59, v60)
-
-            if v60 == nil then
-                break
-            end
-            if not (v62:IsA('UIListLayout') or v62:IsA('UIPadding')) then
-                v61 = v61 + v62.AbsoluteSize.Y
+        for _, child in WIN.container:GetChildren() do
+            if not (child:IsA('UIListLayout') or child:IsA('UIPadding')) then
+                total += child.AbsoluteSize.Y
             end
         end
 
-        return UDim2.new(1, 0, 0, v61 + 10)
+        return UDim2.new(1, 0, 0, total + 10)
     end
 
-    function vu54.Resize(p64, p65, p66)
-        local v67 = p66 or vu63()
+    function WIN.Resize(self, tween, size)
+        local newsize = size or getsize()
 
-        p64.container.ClipsDescendants = true
+        self.container.ClipsDescendants = true
 
-        if p65 then
-            p64.background:TweenSize(v67, 'Out', 'Sine', 0.5, true)
+        if tween then
+            self.background:TweenSize(newsize, 'Out', 'Sine', 0.5, true)
         else
-            p64.background.Size = v67
+            self.background.Size = newsize
         end
     end
-    function vu54.AddToggle(pu68, pu69, p70)
-        pu68.count = pu68.count + 1
+    
+    function WIN.AddToggle(self, text, callback)
+        self.count += 1
 
-        local vu71 = p70 or function() end
-        local v72 = vu29:Create('TextLabel', {
-            Text = pu69,
+        local cb = callback or function() end
+        
+        local label = LIB:Create('TextLabel', {
+            Text = text,
             Size = UDim2.new(1, -10, 0, 20),
             BackgroundTransparency = 1,
             TextColor3 = Color3.fromRGB(255, 255, 255),
             TextXAlignment = Enum.TextXAlignment.Left,
-            LayoutOrder = pu68.Count,
+            LayoutOrder = self.Count,
             TextSize = 14,
             Font = Enum.Font.FredokaOne,
-            Parent = pu68.container,
+            Parent = self.container,
         })
-        local vu73 = vu29:Create('TextButton', {
+        
+        local btn = LIB:Create('TextButton', {
             Text = 'OFF',
             TextColor3 = Color3.fromRGB(255, 25, 25),
             BackgroundTransparency = 1,
@@ -228,220 +220,205 @@ function vu29.CreateWindow(p52, p53)
             Size = UDim2.new(0, 25, 1, 0),
             TextSize = 17,
             Font = Enum.Font.FredokaOne,
-            Parent = v72,
+            Parent = label,
         })
 
-        vu73.MouseButton1Click:connect(function()
-            pu68.toggles[pu69] = not pu68.toggles[pu69]
-            vu73.TextColor3 = pu68.toggles[pu69] and Color3.fromRGB(0, 255, 140) or Color3.fromRGB(255, 25, 25)
-            vu73.Text = pu68.toggles[pu69] and 'ON' or 'OFF'
+        btn.MouseButton1Click:connect(function()
+            self.toggles[text] = not self.toggles[text]
+            btn.TextColor3 = self.toggles[text] and Color3.fromRGB(0, 255, 140) or Color3.fromRGB(255, 25, 25)
+            btn.Text = self.toggles[text] and 'ON' or 'OFF'
 
-            vu71(pu68.toggles[pu69])
+            cb(self.toggles[text])
         end)
-        pu68:Resize()
+        
+        self:Resize()
 
-        return vu73
+        return btn
     end
-    function vu54.AddBox(p74, p75, p76)
-        p74.count = p74.count + 1
+    
+    function WIN.AddBox(self, placeholder, callback)
+        self.count += 1
 
-        local vu77 = p76 or function() end
-        local vu78 = vu29:Create('TextBox', {
-            PlaceholderText = p75,
+        local cb = callback or function() end
+        
+        local box = LIB:Create('TextBox', {
+            PlaceholderText = placeholder,
             Size = UDim2.new(1, -10, 0, 20),
             BackgroundTransparency = 0.75,
-            BackgroundColor3 = vu55.boxcolor,
+            BackgroundColor3 = cfg.boxcolor,
             TextColor3 = Color3.fromRGB(255, 255, 255),
             TextXAlignment = Enum.TextXAlignment.Center,
             TextSize = 14,
             Text = '',
             Font = Enum.Font.FredokaOne,
-            LayoutOrder = p74.Count,
+            LayoutOrder = self.Count,
             BorderSizePixel = 0,
-            Parent = p74.container,
+            Parent = self.container,
         })
 
-        vu78.FocusLost:connect(function(...)
-            vu77(vu78, ...)
+        box.FocusLost:connect(function(...)
+            cb(box, ...)
         end)
-        p74:Resize()
+        
+        self:Resize()
 
-        return vu78
+        return box
     end
-    function vu54.AddButton(p79, p80, p81)
-        p79.count = p79.count + 1
+    
+    function WIN.AddButton(self, text, callback)
+        self.count += 1
 
-        local v82 = vu29:Create('TextButton', {
-            Text = p80,
+        local btn = LIB:Create('TextButton', {
+            Text = text,
             Size = UDim2.new(1, -10, 0, 20),
             BackgroundTransparency = 1,
             TextColor3 = Color3.fromRGB(255, 255, 255),
             TextXAlignment = Enum.TextXAlignment.Left,
             TextSize = 14,
             Font = Enum.Font.FredokaOne,
-            LayoutOrder = p79.Count,
-            Parent = p79.container,
+            LayoutOrder = self.Count,
+            Parent = self.container,
         })
 
-        v82.MouseButton1Click:connect(p81 or function() end)
-        p79:Resize()
+        btn.MouseButton1Click:connect(callback or function() end)
+        
+        self:Resize()
 
-        return v82
+        return btn
     end
-    function vu54.AddLabel(p83, p84)
-        p83.count = p83.count + 1
+    
+    function WIN.AddLabel(self, text)
+        self.count += 1
 
-        local v85 = game:GetService('TextService'):GetTextSize(p84, 16, Enum.Font.FredokaOne, Vector2.new(math.huge, math.huge))
-        local v86 = vu29:Create('TextLabel', {
-            Text = p84,
-            Size = UDim2.new(1, -10, 0, v85.Y + 5),
+        local textsize = game:GetService('TextService'):GetTextSize(text, 16, Enum.Font.FredokaOne, Vector2.new(math.huge, math.huge))
+        
+        local label = LIB:Create('TextLabel', {
+            Text = text,
+            Size = UDim2.new(1, -10, 0, textsize.Y + 5),
             TextScaled = false,
             BackgroundTransparency = 1,
             TextColor3 = Color3.fromRGB(255, 255, 255),
             TextXAlignment = Enum.TextXAlignment.Left,
             TextSize = 14,
             Font = Enum.Font.FredokaOne,
-            LayoutOrder = p83.Count,
-            Parent = p83.container,
+            LayoutOrder = self.Count,
+            Parent = self.container,
         })
 
-        p83:Resize()
+        self:Resize()
 
-        return v86
+        return label
     end
-    function vu54.AddDropdown(pu87, pu88, p89)
-        pu87.count = pu87.count + 1
+    
+    function WIN.AddDropdown(self, options, callback)
+        self.count += 1
 
-        local v90 = pu88[1] or ''
-        local vu91 = p89 or function() end
-        local vu92 = vu29:Create('TextLabel', {
+        local selected = options[1] or ''
+        local cb = callback or function() end
+        
+        local label = LIB:Create('TextLabel', {
             Size = UDim2.new(1, -10, 0, 20),
             BackgroundTransparency = 0.75,
-            BackgroundColor3 = pu88.boxcolor,
+            BackgroundColor3 = options.boxcolor,
             TextColor3 = Color3.fromRGB(255, 255, 255),
             TextXAlignment = Enum.TextXAlignment.Center,
             TextSize = 14,
-            Text = v90,
+            Text = selected,
             Font = Enum.Font.FredokaOne,
             BorderSizePixel = 0,
-            LayoutOrder = pu87.Count,
-            Parent = pu87.container,
+            LayoutOrder = self.Count,
+            Parent = self.container,
         })
-        local v93 = vu29:Create('ImageButton', {
+        
+        local arrow = LIB:Create('ImageButton', {
             BackgroundTransparency = 1,
             Image = 'rbxassetid://3234893186',
             Size = UDim2.new(0, 18, 1, 0),
             Position = UDim2.new(1, -20, 0, 0),
-            Parent = vu92,
+            Parent = label,
         })
-        local vu94 = nil
+        
+        local dropdown
 
-        local function vu102(p95)
-            local v96 = game:GetService('UserInputService'):GetMouseLocation()
-            local v97 = Vector2.new(v96.X, v96.Y - 36)
-            local v98 = p95.AbsolutePosition.X
-            local v99 = p95.AbsolutePosition.X + p95.AbsoluteSize.X
-            local v100 = p95.AbsolutePosition.Y
-            local v101 = p95.AbsolutePosition.Y + p95.AbsoluteSize.Y
-
-            return v98 <= v97.X and (v97.X <= v99 and (v100 <= v97.Y and v97.Y <= v101))
+        local function inmouse(obj)
+            local pos = game:GetService('UserInputService'):GetMouseLocation()
+            local mousepos = Vector2.new(pos.X, pos.Y - 36)
+            
+            return obj.AbsolutePosition.X <= mousepos.X and mousepos.X <= obj.AbsolutePosition.X + obj.AbsoluteSize.X and obj.AbsolutePosition.Y <= mousepos.Y and mousepos.Y <= obj.AbsolutePosition.Y + obj.AbsoluteSize.Y
         end
-        local function vu108(p103)
-            local v104 = next
-            local v105 = nil
-            local v106 = 0
 
-            while true do
-                local v107
-
-                v105, v107 = v104(p103, v105)
-
-                if v105 == nil then
-                    break
-                end
-
-                v106 = v106 + 1
+        local function count(t)
+            local n = 0
+            for _ in t do
+                n += 1
             end
-
-            return v106
+            return n
         end
 
-        v93.MouseButton1Click:connect(function()
-            if vu108(pu88) ~= 0 then
-                if vu94 then
-                    vu94:Destroy()
-
-                    vu94 = nil
+        arrow.MouseButton1Click:connect(function()
+            if count(options) ~= 0 then
+                if dropdown then
+                    dropdown:Destroy()
+                    dropdown = nil
                 end
 
-                pu87.container.ClipsDescendants = false
-                vu94 = vu29:Create('Frame', {
+                self.container.ClipsDescendants = false
+                
+                dropdown = LIB:Create('Frame', {
                     Position = UDim2.new(0, 0, 1, 0),
                     BackgroundColor3 = Color3.fromRGB(0, 255, 255),
-                    Size = UDim2.new(0, vu92.AbsoluteSize.X, 0, vu108(pu88) * 21),
+                    Size = UDim2.new(0, label.AbsoluteSize.X, 0, count(options) * 21),
                     BorderSizePixel = 0,
-                    Parent = vu92,
+                    Parent = label,
                     ClipsDescendants = true,
                     ZIndex = 2,
                 })
 
-                vu29:Create('UIListLayout', {
+                LIB:Create('UIListLayout', {
                     Name = 'Layout',
-                    Parent = vu94,
+                    Parent = dropdown,
                 })
 
-                local v109 = next
-                local v110 = pu88
-                local v111 = nil
-
-                while true do
-                    local vu112
-
-                    v111, vu112 = v109(v110, v111)
-
-                    if v111 == nil then
-                        break
-                    end
-
-                    vu29:Create('TextButton', {
-                        Text = vu112,
+                for _, option in options do
+                    LIB:Create('TextButton', {
+                        Text = option,
                         BackgroundColor3 = Color3.fromRGB(40, 40, 40),
                         TextColor3 = Color3.fromRGB(255, 255, 255),
                         BorderSizePixel = 0,
                         TextSize = 14,
                         Font = Enum.Font.FredokaOne,
                         Size = UDim2.new(1, 0, 0, 21),
-                        Parent = vu94,
+                        Parent = dropdown,
                         ZIndex = 2,
                     }).MouseButton1Click:connect(function()
-                        vu92.Text = vu112
-
-                        vu91(vu112)
-
-                        vu94.Size = UDim2.new(1, 0, 0, 0)
-
-                        game:GetService('Debris'):AddItem(vu94, 0.1)
+                        label.Text = option
+                        cb(option)
+                        dropdown.Size = UDim2.new(1, 0, 0, 0)
+                        game:GetService('Debris'):AddItem(dropdown, 0.1)
                     end)
                 end
             end
         end)
-        game:GetService('UserInputService').InputBegan:connect(function(p113)
-            if p113.UserInputType == Enum.UserInputType.MouseButton1 and (vu94 and not vu102(vu94)) then
-                game:GetService('Debris'):AddItem(vu94)
+        
+        game:GetService('UserInputService').InputBegan:connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 and dropdown and not inmouse(dropdown) then
+                game:GetService('Debris'):AddItem(dropdown)
             end
         end)
-        vu91(v90)
-        pu87:Resize()
+        
+        cb(selected)
+        self:Resize()
 
         return {
-            Refresh = function(_, p114)
-                game:GetService('Debris'):AddItem(vu94)
-
-                pu88 = p114
-                vu92.Text = pu88[1]
+            Refresh = function(_, newoptions)
+                game:GetService('Debris'):AddItem(dropdown)
+                options = newoptions
+                label.Text = options[1]
             end,
         }
     end
 
-    return vu54
+    return WIN
 end
+
+return LIB
