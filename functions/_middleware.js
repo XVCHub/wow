@@ -1,17 +1,6 @@
 const GITHUB_REPO = 'XVCHub/wow';
 const GITHUB_BRANCH = 'main';
 
-const FOLDER_ROUTES = {
-  '👅': 'images',
-  'cracks': 'cracks',
-  'libs/kick': 'libs/kick',
-  'libs/luarmorconsole': 'libs/luarmorconsole',
-  'libs/uistealer': 'libs/uistealer',
-  'libs/print': 'libs/print',
-  'libs/': 'libs/',
-  'docs/kicklib': 'docs/kicklib'
-};
-
 export async function onRequest(context) {
   const url = new URL(context.request.url);
   let pathname = decodeURIComponent(url.pathname);
@@ -23,7 +12,7 @@ export async function onRequest(context) {
   }
 
   if (pathname === '/icon.png' || pathname === '/favicon.ico') {
-    const rawUrl = 'https://raw.githubusercontent.com/' + GITHUB_REPO + '/' + GITHUB_BRANCH + '/icon.png';
+    const rawUrl = `https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/icon.png`;
     const response = await fetch(rawUrl);
     
     if (response.ok) {
@@ -37,51 +26,41 @@ export async function onRequest(context) {
     }
   }
 
-  if (pathname.startsWith('/docs/')) {
-    const docPath = pathname.substring(1);
-    
-    try {
-      const indexUrl = 'https://raw.githubusercontent.com/' + GITHUB_REPO + '/' + GITHUB_BRANCH + '/' + docPath + '/index.html';
-      const response = await fetch(indexUrl);
-      
-      if (response.ok) {
-        const html = await response.text();
-        return new Response(html, {
-          headers: { 'Content-Type': 'text/html; charset=utf-8' }
-        });
+  const parts = pathname.split('/').filter(p => p);
+  
+  if (parts.length === 0) {
+    return new Response('404', { status: 404 });
+  }
+
+  if (parts.length === 1) {
+    const folderName = parts[0];
+    const apiUrl = `https://api.github.com/repos/${GITHUB_REPO}/contents/${folderName}`;
+    const response = await fetch(apiUrl, { 
+      headers: { 'User-Agent': 'Cloudflare-Worker' } 
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (Array.isArray(data)) {
+        return await listFiles(folderName, folderName);
       }
-    } catch (e) {
-    }
-  }
-
-  for (const [route, folder] of Object.entries(FOLDER_ROUTES)) {
-    if (pathname === '/' + route) {
-      return await listFiles(folder, route);
     }
     
-    if (pathname.startsWith('/' + route + '/')) {
-      const filename = pathname.replace('/' + route + '/', '');
-      return await fetchFromGitHub(folder, filename);
-    }
+    return await fetchFile(parts[0], '');
   }
 
-  if (pathname !== '/') {
-    const filename = pathname.substring(1);
-    return await fetchFromGitHub('scripts', filename);
-  }
-
-  return new Response('404 - not found', { 
-    status: 404,
-    headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-  });
+  const folder = parts.slice(0, -1).join('/');
+  const filename = parts[parts.length - 1];
+  return await fetchFile(filename, folder);
 }
 
-async function fetchFromGitHub(folder, filename) {
+async function fetchFile(filename, folder) {
   try {
     let actualFilename = filename;
+    const fullPath = folder ? `${folder}/${filename}` : filename;
     
     if (!filename.includes('.')) {
-      const apiUrl = 'https://api.github.com/repos/' + GITHUB_REPO + '/contents/' + folder;
+      const apiUrl = `https://api.github.com/repos/${GITHUB_REPO}/contents/${folder || ''}`;
       const filesResponse = await fetch(apiUrl, { 
         headers: { 
           'User-Agent': 'Cloudflare-Worker',
@@ -102,19 +81,19 @@ async function fetchFromGitHub(folder, filename) {
           
           const name = file.name.toLowerCase();
           
-          if (name === baseName + '.lua' || name === baseName + '.txt' || 
-              name === baseName + '.js' || name === baseName + '.py' ||
-              name === baseName + '.png' || name === baseName + '.jpg' || 
-              name === baseName + '.jpeg' || name === baseName + '.gif' ||
-              name === baseName + '.webp' || name === baseName + '.svg' ||
-              name === baseName + '.exe' || name === baseName + '.dll' ||
-              name === baseName + '.zip' || name === baseName + '.rar') {
+          if (name === `${baseName}.lua` || name === `${baseName}.txt` || 
+              name === `${baseName}.js` || name === `${baseName}.py` ||
+              name === `${baseName}.png` || name === `${baseName}.jpg` || 
+              name === `${baseName}.jpeg` || name === `${baseName}.gif` ||
+              name === `${baseName}.webp` || name === `${baseName}.svg` ||
+              name === `${baseName}.exe` || name === `${baseName}.dll` ||
+              name === `${baseName}.zip` || name === `${baseName}.rar`) {
             foundFile = file.name;
             break;
           }
           
           const versionMatch = name.match(
-            new RegExp('^' + baseName + 'v([0-9]+)\\.(lua|txt|js|py|png|jpg|jpeg|gif|webp|svg|exe|dll|zip|rar)$')
+            new RegExp(`^${baseName}v([0-9]+)\\.(lua|txt|js|py|png|jpg|jpeg|gif|webp|svg|exe|dll|zip|rar)$`)
           );
           
           if (versionMatch) {
@@ -132,11 +111,14 @@ async function fetchFromGitHub(folder, filename) {
       }
     }
 
-    const rawUrl = 'https://raw.githubusercontent.com/' + GITHUB_REPO + '/' + GITHUB_BRANCH + '/' + folder + '/' + actualFilename;
+    const rawUrl = folder 
+      ? `https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/${folder}/${actualFilename}`
+      : `https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/${actualFilename}`;
+    
     const response = await fetch(rawUrl);
 
     if (!response.ok) {
-      return new Response('file not found: ' + folder + '/' + actualFilename, { 
+      return new Response(`file not found: ${fullPath}`, { 
         status: 404,
         headers: { 'Content-Type': 'text/plain; charset=utf-8' }
       });
@@ -162,7 +144,7 @@ async function fetchFromGitHub(folder, filename) {
       return new Response(binaryBlob, {
         headers: { 
           'Content-Type': contentType,
-          'Content-Disposition': 'attachment; filename="' + actualFilename + '"',
+          'Content-Disposition': `attachment; filename="${actualFilename}"`,
           'Cache-Control': 'public, max-age=86400'
         }
       });
@@ -174,7 +156,7 @@ async function fetchFromGitHub(folder, filename) {
     });
 
   } catch (error) {
-    return new Response('error fetching file: ' + error.message, {
+    return new Response(`error: ${error.message}`, {
       status: 500,
       headers: { 'Content-Type': 'text/plain; charset=utf-8' }
     });
@@ -183,53 +165,53 @@ async function fetchFromGitHub(folder, filename) {
 
 async function listFiles(folder, route) {
   try {
-    const apiUrl = 'https://api.github.com/repos/' + GITHUB_REPO + '/contents/' + folder;
+    const apiUrl = `https://api.github.com/repos/${GITHUB_REPO}/contents/${folder}`;
     const response = await fetch(apiUrl, { 
       headers: { 'User-Agent': 'Cloudflare-Worker' } 
     });
 
     if (!response.ok) {
-      return new Response(folder + ' folder not found', { status: 404 });
+      return new Response(`${folder} not found`, { status: 404 });
     }
 
     const files = await response.json();
-    const fileList = files.filter(function(f) { return f.type === 'file'; });
+    const fileList = files.filter(f => f.type === 'file');
 
     const isImageFolder = folder === 'images';
     let cards = '';
 
     for (let i = 0; i < fileList.length; i++) {
       const file = fileList[i];
-      const fileUrl = 'https://raw.githubusercontent.com/' + GITHUB_REPO + '/' + GITHUB_BRANCH + '/' + folder + '/' + file.name;
+      const fileUrl = `https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/${folder}/${file.name}`;
       
       if (isImageFolder && file.name.match(/\.(png|jpg|jpeg|gif|webp|svg)$/i)) {
-        cards += '<div class="image-card">';
-        cards += '<img src="' + fileUrl + '" alt="' + file.name + '">';
-        cards += '<div class="image-info">';
-        cards += '<div class="image-name">' + file.name + '</div>';
-        cards += '<a href="/' + route + '/' + file.name + '" class="image-link">view full image</a>';
-        cards += '</div>';
-        cards += '</div>';
+        cards += `<div class="image-card">
+          <img src="${fileUrl}" alt="${file.name}">
+          <div class="image-info">
+            <div class="image-name">${file.name}</div>
+            <a href="/${route}/${file.name}" class="image-link">view full image</a>
+          </div>
+        </div>`;
       } else {
-        cards += '<div class="file-card">';
-        cards += '<div class="file-icon">📄</div>';
-        cards += '<div class="file-info">';
-        cards += '<div class="file-name">' + file.name + '</div>';
-        cards += '<a href="/' + route + '/' + file.name + '" class="file-link">download</a>';
-        cards += '</div>';
-        cards += '</div>';
+        cards += `<div class="file-card">
+          <div class="file-icon">📄</div>
+          <div class="file-info">
+            <div class="file-name">${file.name}</div>
+            <a href="/${route}/${file.name}" class="file-link">download</a>
+          </div>
+        </div>`;
       }
     }
 
     const title = folder.charAt(0).toUpperCase() + folder.slice(1) + ' gallery';
-    const html = '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>' + title + '</title><link rel="icon" type="image/png" href="/icon.png"><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;background:#0d1117;color:#c9d1d9;padding:20px;}.header{max-width:1200px;margin:0 auto 30px;}h1{color:#58a6ff;margin-bottom:10px;}.back-link{color:#58a6ff;text-decoration:none;}.back-link:hover{text-decoration:underline;}.gallery{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:20px;}.image-card,.file-card{background:#161b22;border:1px solid #30363d;border-radius:8px;overflow:hidden;transition:transform 0.2s;}.image-card:hover,.file-card:hover{transform:translateY(-4px);border-color:#58a6ff;}.image-card img{width:100%;height:200px;object-fit:cover;background:#0d1117;}.file-card{display:flex;align-items:center;padding:20px;}.file-icon{font-size:48px;margin-right:20px;}.image-info,.file-info{padding:15px;}.file-info{flex:1;}.image-name,.file-name{color:#58a6ff;font-weight:500;margin-bottom:8px;word-break:break-all;}.image-link,.file-link{color:#8b949e;text-decoration:none;font-size:13px;}.image-link:hover,.file-link:hover{color:#58a6ff;}</style></head><body><div class="header"><h1>' + title + '</h1><a href="/" class="back-link">back to home</a></div><div class="gallery">' + cards + '</div></body></html>';
+    const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${title}</title><link rel="icon" type="image/png" href="/icon.png"><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;background:#0d1117;color:#c9d1d9;padding:20px;}.header{max-width:1200px;margin:0 auto 30px;}h1{color:#58a6ff;margin-bottom:10px;}.back-link{color:#58a6ff;text-decoration:none;}.back-link:hover{text-decoration:underline;}.gallery{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:20px;}.image-card,.file-card{background:#161b22;border:1px solid #30363d;border-radius:8px;overflow:hidden;transition:transform 0.2s;}.image-card:hover,.file-card:hover{transform:translateY(-4px);border-color:#58a6ff;}.image-card img{width:100%;height:200px;object-fit:cover;background:#0d1117;}.file-card{display:flex;align-items:center;padding:20px;}.file-icon{font-size:48px;margin-right:20px;}.image-info,.file-info{padding:15px;}.file-info{flex:1;}.image-name,.file-name{color:#58a6ff;font-weight:500;margin-bottom:8px;word-break:break-all;}.image-link,.file-link{color:#8b949e;text-decoration:none;font-size:13px;}.image-link:hover,.file-link:hover{color:#58a6ff;}</style></head><body><div class="header"><h1>${title}</h1><a href="/" class="back-link">back to home</a></div><div class="gallery">${cards}</div></body></html>`;
 
     return new Response(html, {
       headers: { 'Content-Type': 'text/html; charset=utf-8' }
     });
 
   } catch (error) {
-    return new Response('error loading files: ' + error.message, {
+    return new Response(`error: ${error.message}`, {
       status: 500,
       headers: { 'Content-Type': 'text/plain; charset=utf-8' }
     });
