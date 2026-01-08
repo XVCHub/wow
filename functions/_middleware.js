@@ -8,6 +8,7 @@ const FOLDER_ROUTES = {
   'libs/luarmorconsole': 'libs/luarmorconsole',
   'libs/uistealer': 'libs/uistealer',
   'libs/print': 'libs/print',
+  'libs/': 'libs/',
   'docs/kicklib': 'docs/kicklib'
 };
 
