@@ -1,429 +1,447 @@
- local library = {
-        windowcount = 0;
-    }
-   
-    local dragger = {};
-    local resizer = {};
-   
-    do
-        local mouse = game:GetService("Players").LocalPlayer:GetMouse();
-        local inputService = game:GetService('UserInputService');
-        local heartbeat = game:GetService("RunService").Heartbeat;
-        -- // credits to Ririchi / Inori for this cute drag function :)
-        function dragger.new(frame)
-            local s, event = pcall(function()
-                return frame.MouseEnter
-            end)
-   
-            if s then
-                frame.Active = true;
-   
-                event:connect(function()
-                    local input = frame.InputBegan:connect(function(key)
-                        if key.UserInputType == Enum.UserInputType.MouseButton1 then
-                            local objectPosition = Vector2.new(mouse.X - frame.AbsolutePosition.X, mouse.Y - frame.AbsolutePosition.Y);
-                            while heartbeat:wait() and inputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) do
-                                frame:TweenPosition(UDim2.new(0, mouse.X - objectPosition.X + (frame.Size.X.Offset * frame.AnchorPoint.X), 0, mouse.Y - objectPosition.Y + (frame.Size.Y.Offset * frame.AnchorPoint.Y)), 'Out', 'Quad', 0.1, true);
-                            end
-                        end
-                    end)
-   
-                    local leave;
-                    leave = frame.MouseLeave:connect(function()
-                        input:disconnect();
-                        leave:disconnect();
-                    end)
-                end)
-            end
-        end
-       
-        function resizer.new(p, s)
-            p:GetPropertyChangedSignal('AbsoluteSize'):connect(function()
-                s.Size = UDim2.new(s.Size.X.Scale, s.Size.X.Offset, s.Size.Y.Scale, p.AbsoluteSize.Y);
-            end)
-        end
-    end
-   
-   
-    local defaults = {
-        txtcolor = Color3.fromRGB(255, 255, 255),
-        underline = Color3.fromRGB(0, 255, 140),
-        barcolor = Color3.fromRGB(40, 40, 40),
-        bgcolor = Color3.fromRGB(30, 30, 30),
-    }
-   
-    function library:Create(class, props)
-        local object = Instance.new(class);
-   
-        for i, prop in next, props do
-            if i ~= "Parent" then
-                object[i] = prop;
-            end
-        end
-   
-        object.Parent = props.Parent;
-        return object;
-    end
-   
-    function library:CreateWindow(options)
-        assert(options.text, "no name");
-        local window = {
-            count = 0;
-            toggles = {},
-            closed = false;
-        }
-   
-        local options = options or {};
-        setmetatable(options, {__index = defaults})
-   
-        self.windowcount = self.windowcount + 1;
-   
-        library.gui = library.gui or self:Create("ScreenGui", {Name = "UILibrary", Parent = game:GetService("CoreGui")})
-        window.frame = self:Create("Frame", {
-            Name = options.text;
-            Parent = self.gui,
-            Active = true,
-            BackgroundTransparency = 0,
-            Size = UDim2.new(0, 190, 0, 30),
-            Position = UDim2.new(0, (15 + ((200 * self.windowcount) - 200)), 0, 15),
-            BackgroundColor3 = options.barcolor,
-            BorderSizePixel = 0;
-        })
-   
-        window.background = self:Create('Frame', {
-            Name = 'Background';
-            Parent = window.frame,
-            BorderSizePixel = 0;
-            BackgroundColor3 = options.bgcolor,
-            Position = UDim2.new(0, 0, 1, 0),
-            Size = UDim2.new(1, 0, 0, 25),
-            ClipsDescendants = true;
-        })
-       
-        window.container = self:Create('Frame', {
-            Name = 'Container';
-            Parent = window.frame,
-            BorderSizePixel = 0;
-            BackgroundColor3 = options.bgcolor,
-            Position = UDim2.new(0, 0, 1, 0),
-            Size = UDim2.new(1, 0, 0, 25),
-            ClipsDescendants = true;
-        })
-       
-        window.organizer = self:Create('UIListLayout', {
-            Name = 'Sorter';
-            --Padding = UDim.new(0, 0);
-            SortOrder = Enum.SortOrder.LayoutOrder;
-            Parent = window.container;
-        })
-       
-        window.padder = self:Create('UIPadding', {
-            Name = 'Padding';
-            PaddingLeft = UDim.new(0, 10);
-            PaddingTop = UDim.new(0, 5);
-            Parent = window.container;
-        })
-   
-        self:Create("Frame", {
-            Name = 'Underline';
-            Size = UDim2.new(1, 0, 0, 1),
-            Position = UDim2.new(0, 0, 1, -1),
-            BorderSizePixel = 0;
-            BackgroundColor3 = options.underline;
-            Parent = window.frame
-        })
-   
-        local togglebutton = self:Create("TextButton", {
-            Name = 'Toggle';
-            ZIndex = 2,
-            BackgroundTransparency = 1;
-            Position = UDim2.new(1, -25, 0, 0),
-            Size = UDim2.new(0, 25, 1, 0),
-            Text = "-",
-            TextSize = 17,
-            TextColor3 = options.txtcolor,
-            Font = Enum.Font.FredokaOne;
-            Parent = window.frame,
-        });
-   
-        togglebutton.MouseButton1Click:connect(function()
-            window.closed = not window.closed
-            togglebutton.Text = (window.closed and "+" or "-")
-            if window.closed then
-                window:Resize(true, UDim2.new(1, 0, 0, 0))
-            else
-                window:Resize(true)
-            end
-        end)
-   
-        self:Create("TextLabel", {
-            Size = UDim2.new(1, 0, 1, 0),
-            BackgroundTransparency = 1;
-            BorderSizePixel = 0;
-            TextColor3 = options.txtcolor,
-            TextColor3 = (options.bartextcolor or Color3.fromRGB(255, 255, 255));
-            TextSize = 17,
-            Font = Enum.Font.FredokaOneSemibold;
-            Text = options.text or "window",
-            Name = "Window",
-            Parent = window.frame,
-        })
-   
-        do
-            dragger.new(window.frame)
-            resizer.new(window.background, window.container);
-        end
-   
-        local function getSize()
-            local ySize = 0;
-            for i, object in next, window.container:GetChildren() do
-                if (not object:IsA('UIListLayout')) and (not object:IsA('UIPadding')) then
-                    ySize = ySize + object.AbsoluteSize.Y
-                end
-            end
-            return UDim2.new(1, 0, 0, ySize + 10)
-        end
-   
-        function window:Resize(tween, change)
-            local size = change or getSize()
-            self.container.ClipsDescendants = true;
-           
-            if tween then
-                self.background:TweenSize(size, "Out", "Sine", 0.5, true)
-            else
-                self.background.Size = size
-            end
-        end
-   
-        function window:AddToggle(text, callback)
-            self.count = self.count + 1
-   
-            callback = callback or function() end
-            local label = library:Create("TextLabel", {
-                Text =  text,
-                Size = UDim2.new(1, -10, 0, 20);
-                --Position = UDim2.new(0, 5, 0, ((20 * self.count) - 20) + 5),
-                BackgroundTransparency = 1;
-                TextColor3 = Color3.fromRGB(255, 255, 255);
-                TextXAlignment = Enum.TextXAlignment.Left;
-                LayoutOrder = self.Count;
-                TextSize = 16,
-                Font = Enum.Font.FredokaOne,
-                Parent = self.container;
-            })
-   
-            local button = library:Create("TextButton", {
-                Text = "OFF",
-                TextColor3 = Color3.fromRGB(255, 25, 25),
-                BackgroundTransparency = 1;
-                Position = UDim2.new(1, -25, 0, 0),
-                Size = UDim2.new(0, 25, 1, 0),
-                TextSize = 17,
-                Font = Enum.Font.FredokaOneSemibold,
-                Parent = label;
-            })
-   
-            button.MouseButton1Click:connect(function()
-                self.toggles[text] = (not self.toggles[text])
-                button.TextColor3 = (self.toggles[text] and Color3.fromRGB(0, 255, 140) or Color3.fromRGB(255, 25, 25))
-                button.Text =(self.toggles[text] and "ON" or "OFF")
-   
-                callback(self.toggles[text])
-            end)
-   
-            self:Resize()
-            return button
-        end
-   
-        function window:AddBox(text, callback)
-            self.count = self.count + 1
-            callback = callback or function() end
-   
-            local box = library:Create("TextBox", {
-                PlaceholderText = text,
-                Size = UDim2.new(1, -10, 0, 20);
-                --Position = UDim2.new(0, 5, 0, ((20 * self.count) - 20) + 5),
-                BackgroundTransparency = 0.75;
-                BackgroundColor3 = options.boxcolor,
-                TextColor3 = Color3.fromRGB(255, 255, 255);
-                TextXAlignment = Enum.TextXAlignment.Center;
-                TextSize = 16,
-                Text = "",
-                Font = Enum.Font.FredokaOne,
-                LayoutOrder = self.Count;
-                BorderSizePixel = 0;
-                Parent = self.container;
-            })
-   
-            box.FocusLost:connect(function(...)
-                callback(box, ...)
-            end)
-   
-            self:Resize()
-            return box
-        end
-   
-        function window:AddButton(text, callback)
-            self.count = self.count + 1
-   
-            callback = callback or function() end
-            local button = library:Create("TextButton", {
-                Text =  text,
-                Size = UDim2.new(1, -10, 0, 20);
-                --Position = UDim2.new(0, 5, 0, ((20 * self.count) - 20) + 5),
-                BackgroundTransparency = 1;
-                TextColor3 = Color3.fromRGB(255, 255, 255);
-                TextXAlignment = Enum.TextXAlignment.Left;
-                TextSize = 16,
-                Font = Enum.Font.FredokaOne,
-                LayoutOrder = self.Count;
-                Parent = self.container;
-            })
-   
-            button.MouseButton1Click:connect(callback)
-            self:Resize()
-            return button
-        end
-       
-        function window:AddLabel(text)
-            self.count = self.count + 1;
-           
-            local tSize = game:GetService('TextService'):GetTextSize(text, 16, Enum.Font.FredokaOne, Vector2.new(math.huge, math.huge))
-   
-            local button = library:Create("TextLabel", {
-                Text =  text,
-                Size = UDim2.new(1, -10, 0, tSize.Y + 5);
-                TextScaled = false;
-                BackgroundTransparency = 1;
-                TextColor3 = Color3.fromRGB(255, 255, 255);
-                TextXAlignment = Enum.TextXAlignment.Left;
-                TextSize = 16,
-                Font = Enum.Font.FredokaOne,
-                LayoutOrder = self.Count;
-                Parent = self.container;
-            })
-   
-            self:Resize()
-            return button
-        end
-   
-        function window:AddDropdown(options, callback)
-            self.count = self.count + 1
-            local default = options[1] or "";
-           
-            callback = callback or function() end
-            local dropdown = library:Create("TextLabel", {
-                Size = UDim2.new(1, -10, 0, 20);
-                BackgroundTransparency = 0.75;
-                BackgroundColor3 = options.boxcolor,
-                TextColor3 = Color3.fromRGB(255, 255, 255);
-                TextXAlignment = Enum.TextXAlignment.Center;
-                TextSize = 16,
-                Text = default,
-                Font = Enum.Font.FredokaOne,
-                BorderSizePixel = 0;
-                LayoutOrder = self.Count;
-                Parent = self.container;
-            })
-           
-            local button = library:Create("ImageButton",{
-                BackgroundTransparency = 1;
-                Image = 'rbxassetid://3234893186';
-                Size = UDim2.new(0, 18, 1, 0);
-                Position = UDim2.new(1, -20, 0, 0);
-                Parent = dropdown;
-            })
-           
-            local frame;
-           
-            local function isInGui(frame)
-                local mloc = game:GetService('UserInputService'):GetMouseLocation();
-                local mouse = Vector2.new(mloc.X, mloc.Y - 36);
-               
-                local x1, x2 = frame.AbsolutePosition.X, frame.AbsolutePosition.X + frame.AbsoluteSize.X;
-                local y1, y2 = frame.AbsolutePosition.Y, frame.AbsolutePosition.Y + frame.AbsoluteSize.Y;
-           
-                return (mouse.X >= x1 and mouse.X <= x2) and (mouse.Y >= y1 and mouse.Y <= y2)
-            end
-   
-            local function count(t)
-                local c = 0;
-                for i, v in next, t do
-                    c = c + 1
-                end
-                return c;
-            end
-           
-            button.MouseButton1Click:connect(function()
-                if count(options) == 0 then
-                    return
-                end
-   
-                if frame then
-                    frame:Destroy();
-                    frame = nil;
-                end
-               
-                self.container.ClipsDescendants = false;
-   
-                frame = library:Create('Frame', {
-                    Position = UDim2.new(0, 0, 1, 0);
-                    BackgroundColor3 = Color3.fromRGB(40, 40, 40);
-                    Size = UDim2.new(0, dropdown.AbsoluteSize.X, 0, (count(options) * 21));
-                    BorderSizePixel = 0;
-                    Parent = dropdown;
-                    ClipsDescendants = true;
-                    ZIndex = 2;
-                })
-               
-                library:Create('UIListLayout', {
-                    Name = 'Layout';
-                    Parent = frame;
-                })
-   
-                for i, option in next, options do
-                    local selection = library:Create('TextButton', {
-                        Text = option;
-                        BackgroundColor3 = Color3.fromRGB(40, 40, 40);
-                        TextColor3 = Color3.fromRGB(255, 255, 255);
-                        BorderSizePixel = 0;
-                        TextSize = 16;
-                        Font = Enum.Font.FredokaOne;
-                        Size = UDim2.new(1, 0, 0, 21);
-                        Parent = frame;
-                        ZIndex = 2;
-                    })
-                   
-                    selection.MouseButton1Click:connect(function()
-                        dropdown.Text = option;
-                        callback(option)
-                        frame.Size = UDim2.new(1, 0, 0, 0);
-                        game:GetService('Debris'):AddItem(frame, 0.1)
-                    end)
-                end
-            end);
-   
-            game:GetService('UserInputService').InputBegan:connect(function(m)
-                if m.UserInputType == Enum.UserInputType.MouseButton1 then
-                    if frame and (not isInGui(frame)) then
-                        game:GetService('Debris'):AddItem(frame);
+local vu29 = {windowcount = 0}
+local vu30 = {}
+local vu31 = {}
+local vu32 = game:GetService('Players').LocalPlayer:GetMouse()
+local vu33 = game:GetService('UserInputService')
+local vu34 = game:GetService('RunService').Heartbeat
+
+function vu30.new(pu35)
+    local v36, v37 = pcall(function()
+        return pu35.MouseEnter
+    end)
+
+    if v36 then
+        pu35.Active = true
+
+        v37:connect(function()
+            local vu40 = pu35.InputBegan:connect(function(p38)
+                if p38.UserInputType == Enum.UserInputType.MouseButton1 or p38.UserInputType == Enum.UserInputType.Touch then
+                    local v39 = Vector2.new(vu32.X - pu35.AbsolutePosition.X, vu32.Y - pu35.AbsolutePosition.Y)
+
+                    while vu34:wait() and vu33:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) do
+                        pu35:TweenPosition(UDim2.new(0, vu32.X - v39.X + pu35.Size.X.Offset * pu35.AnchorPoint.X, 0, vu32.Y - v39.Y + pu35.Size.Y.Offset * pu35.AnchorPoint.Y), 'Out', 'Quad', 0.1, true)
                     end
                 end
             end)
-           
-            callback(default);
-            self:Resize()
-            return {
-                Refresh = function(self, array)
-                    game:GetService('Debris'):AddItem(frame);
-                    options = array
-                    dropdown.Text = options[1];
-                end
-            }
-        end;
-       
-       
-        return window
+            local vu41 = nil
+
+            vu41 = pu35.MouseLeave:connect(function()
+                vu40:disconnect()
+                vu41:disconnect()
+            end)
+        end)
     end
-   
-    return library
+end
+function vu31.new(pu42, pu43)
+    pu42:GetPropertyChangedSignal('AbsoluteSize'):connect(function()
+        pu43.Size = UDim2.new(pu43.Size.X.Scale, pu43.Size.X.Offset, pu43.Size.Y.Scale, pu42.AbsoluteSize.Y)
+    end)
+end
+
+local vu44 = {
+    txtcolor = Color3.fromRGB(255, 255, 255),
+    underline = Color3.fromRGB(0, 255, 140),
+    barcolor = Color3.fromRGB(40, 40, 40),
+    bgcolor = Color3.fromRGB(30, 30, 30),
+}
+
+function vu29.Create(_, p45, p46)
+    local v47 = Instance.new(p45)
+    local v48 = next
+    local v49 = p46
+    local v50 = nil
+
+    while true do
+        local v51
+
+        v50, v51 = v48(p46, v50)
+
+        if v50 == nil then
+            break
+        end
+        if v50 ~= 'Parent' then
+            v47[v50] = v51
+        end
+    end
+
+    v47.Parent = v49.Parent
+
+    return v47
+end
+function vu29.CreateWindow(p52, p53)
+    assert(p53.text, 'no name')
+
+    local vu54 = {
+        count = 0,
+        toggles = {},
+        closed = false,
+    }
+    local vu55 = p53 or {}
+    local v56 = {__index = vu44}
+
+    setmetatable(vu55, v56)
+
+    p52.windowcount = p52.windowcount + 1
+    vu29.gui = vu29.gui or p52:Create('ScreenGui', {
+        Name = 'UILibrary',
+        Parent = game:GetService('CoreGui'),
+    })
+    vu54.frame = p52:Create('Frame', {
+        Name = vu55.text,
+        Parent = p52.gui,
+        Active = true,
+        BackgroundTransparency = 0,
+        Size = UDim2.new(0, 190, 0, 30),
+        Position = UDim2.new(0, 15 + (200 * p52.windowcount - 200), 0, 15),
+        BackgroundColor3 = vu55.barcolor,
+        BorderSizePixel = 0,
+    })
+    vu54.background = p52:Create('Frame', {
+        Name = 'Background',
+        Parent = vu54.frame,
+        BorderSizePixel = 0,
+        BackgroundColor3 = vu55.bgcolor,
+        Position = UDim2.new(0, 0, 1, 0),
+        Size = UDim2.new(1, 0, 0, 25),
+        ClipsDescendants = true,
+    })
+    vu54.container = p52:Create('Frame', {
+        Name = 'Container',
+        Parent = vu54.frame,
+        BorderSizePixel = 0,
+        BackgroundColor3 = vu55.bgcolor,
+        Position = UDim2.new(0, 0, 1, 0),
+        Size = UDim2.new(1, 0, 0, 25),
+        ClipsDescendants = true,
+    })
+    vu54.organizer = p52:Create('UIListLayout', {
+        Name = 'Sorter',
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Parent = vu54.container,
+    })
+    vu54.padder = p52:Create('UIPadding', {
+        Name = 'Padding',
+        PaddingLeft = UDim.new(0, 10),
+        PaddingTop = UDim.new(0, 5),
+        Parent = vu54.container,
+    })
+
+    p52:Create('Frame', {
+        Name = 'Underline',
+        Size = UDim2.new(1, 0, 0, 1),
+        Position = UDim2.new(0, 0, 1, -1),
+        BorderSizePixel = 0,
+        BackgroundColor3 = vu55.underline,
+        Parent = vu54.frame,
+    })
+
+    local vu57 = p52:Create('TextButton', {
+        Name = 'Toggle',
+        ZIndex = 2,
+        BackgroundTransparency = 1,
+        Position = UDim2.new(1, -25, 0, 0),
+        Size = UDim2.new(0, 25, 1, 0),
+        Text = '-',
+        TextSize = 17,
+        TextColor3 = vu55.txtcolor,
+        Font = Enum.Font.FredokaOne,
+        Parent = vu54.frame,
+    })
+
+    vu57.MouseButton1Click:connect(function()
+        vu54.closed = not vu54.closed
+        vu57.Text = vu54.closed and '+' or '-'
+
+        if vu54.closed then
+            vu54:Resize(true, UDim2.new(1, 0, 0, 0))
+        else
+            vu54:Resize(true)
+        end
+    end)
+    p52:Create('TextLabel', {
+        Size = UDim2.new(1, 0, 1, 0),
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        TextColor3 = vu55.txtcolor,
+        TextColor3 = vu55.bartextcolor or Color3.fromRGB(255, 255, 255),
+        TextSize = 17,
+        Font = Enum.Font.FredokaOne,
+        Text = vu55.text or 'window',
+        Name = 'Window',
+        Parent = vu54.frame,
+    })
+    vu30.new(vu54.frame)
+    vu31.new(vu54.background, vu54.container)
+
+    local function vu63()
+        local v58 = next
+        local v59, v60 = vu54.container:GetChildren()
+        local v61 = 0
+
+        while true do
+            local v62
+
+            v60, v62 = v58(v59, v60)
+
+            if v60 == nil then
+                break
+            end
+            if not (v62:IsA('UIListLayout') or v62:IsA('UIPadding')) then
+                v61 = v61 + v62.AbsoluteSize.Y
+            end
+        end
+
+        return UDim2.new(1, 0, 0, v61 + 10)
+    end
+
+    function vu54.Resize(p64, p65, p66)
+        local v67 = p66 or vu63()
+
+        p64.container.ClipsDescendants = true
+
+        if p65 then
+            p64.background:TweenSize(v67, 'Out', 'Sine', 0.5, true)
+        else
+            p64.background.Size = v67
+        end
+    end
+    function vu54.AddToggle(pu68, pu69, p70)
+        pu68.count = pu68.count + 1
+
+        local vu71 = p70 or function() end
+        local v72 = vu29:Create('TextLabel', {
+            Text = pu69,
+            Size = UDim2.new(1, -10, 0, 20),
+            BackgroundTransparency = 1,
+            TextColor3 = Color3.fromRGB(255, 255, 255),
+            TextXAlignment = Enum.TextXAlignment.Left,
+            LayoutOrder = pu68.Count,
+            TextSize = 14,
+            Font = Enum.Font.FredokaOne,
+            Parent = pu68.container,
+        })
+        local vu73 = vu29:Create('TextButton', {
+            Text = 'OFF',
+            TextColor3 = Color3.fromRGB(255, 25, 25),
+            BackgroundTransparency = 1,
+            Position = UDim2.new(1, -25, 0, 0),
+            Size = UDim2.new(0, 25, 1, 0),
+            TextSize = 17,
+            Font = Enum.Font.FredokaOne,
+            Parent = v72,
+        })
+
+        vu73.MouseButton1Click:connect(function()
+            pu68.toggles[pu69] = not pu68.toggles[pu69]
+            vu73.TextColor3 = pu68.toggles[pu69] and Color3.fromRGB(0, 255, 140) or Color3.fromRGB(255, 25, 25)
+            vu73.Text = pu68.toggles[pu69] and 'ON' or 'OFF'
+
+            vu71(pu68.toggles[pu69])
+        end)
+        pu68:Resize()
+
+        return vu73
+    end
+    function vu54.AddBox(p74, p75, p76)
+        p74.count = p74.count + 1
+
+        local vu77 = p76 or function() end
+        local vu78 = vu29:Create('TextBox', {
+            PlaceholderText = p75,
+            Size = UDim2.new(1, -10, 0, 20),
+            BackgroundTransparency = 0.75,
+            BackgroundColor3 = vu55.boxcolor,
+            TextColor3 = Color3.fromRGB(255, 255, 255),
+            TextXAlignment = Enum.TextXAlignment.Center,
+            TextSize = 14,
+            Text = '',
+            Font = Enum.Font.FredokaOne,
+            LayoutOrder = p74.Count,
+            BorderSizePixel = 0,
+            Parent = p74.container,
+        })
+
+        vu78.FocusLost:connect(function(...)
+            vu77(vu78, ...)
+        end)
+        p74:Resize()
+
+        return vu78
+    end
+    function vu54.AddButton(p79, p80, p81)
+        p79.count = p79.count + 1
+
+        local v82 = vu29:Create('TextButton', {
+            Text = p80,
+            Size = UDim2.new(1, -10, 0, 20),
+            BackgroundTransparency = 1,
+            TextColor3 = Color3.fromRGB(255, 255, 255),
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextSize = 14,
+            Font = Enum.Font.FredokaOne,
+            LayoutOrder = p79.Count,
+            Parent = p79.container,
+        })
+
+        v82.MouseButton1Click:connect(p81 or function() end)
+        p79:Resize()
+
+        return v82
+    end
+    function vu54.AddLabel(p83, p84)
+        p83.count = p83.count + 1
+
+        local v85 = game:GetService('TextService'):GetTextSize(p84, 16, Enum.Font.FredokaOne, Vector2.new(math.huge, math.huge))
+        local v86 = vu29:Create('TextLabel', {
+            Text = p84,
+            Size = UDim2.new(1, -10, 0, v85.Y + 5),
+            TextScaled = false,
+            BackgroundTransparency = 1,
+            TextColor3 = Color3.fromRGB(255, 255, 255),
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextSize = 14,
+            Font = Enum.Font.FredokaOne,
+            LayoutOrder = p83.Count,
+            Parent = p83.container,
+        })
+
+        p83:Resize()
+
+        return v86
+    end
+    function vu54.AddDropdown(pu87, pu88, p89)
+        pu87.count = pu87.count + 1
+
+        local v90 = pu88[1] or ''
+        local vu91 = p89 or function() end
+        local vu92 = vu29:Create('TextLabel', {
+            Size = UDim2.new(1, -10, 0, 20),
+            BackgroundTransparency = 0.75,
+            BackgroundColor3 = pu88.boxcolor,
+            TextColor3 = Color3.fromRGB(255, 255, 255),
+            TextXAlignment = Enum.TextXAlignment.Center,
+            TextSize = 14,
+            Text = v90,
+            Font = Enum.Font.FredokaOne,
+            BorderSizePixel = 0,
+            LayoutOrder = pu87.Count,
+            Parent = pu87.container,
+        })
+        local v93 = vu29:Create('ImageButton', {
+            BackgroundTransparency = 1,
+            Image = 'rbxassetid://3234893186',
+            Size = UDim2.new(0, 18, 1, 0),
+            Position = UDim2.new(1, -20, 0, 0),
+            Parent = vu92,
+        })
+        local vu94 = nil
+
+        local function vu102(p95)
+            local v96 = game:GetService('UserInputService'):GetMouseLocation()
+            local v97 = Vector2.new(v96.X, v96.Y - 36)
+            local v98 = p95.AbsolutePosition.X
+            local v99 = p95.AbsolutePosition.X + p95.AbsoluteSize.X
+            local v100 = p95.AbsolutePosition.Y
+            local v101 = p95.AbsolutePosition.Y + p95.AbsoluteSize.Y
+
+            return v98 <= v97.X and (v97.X <= v99 and (v100 <= v97.Y and v97.Y <= v101))
+        end
+        local function vu108(p103)
+            local v104 = next
+            local v105 = nil
+            local v106 = 0
+
+            while true do
+                local v107
+
+                v105, v107 = v104(p103, v105)
+
+                if v105 == nil then
+                    break
+                end
+
+                v106 = v106 + 1
+            end
+
+            return v106
+        end
+
+        v93.MouseButton1Click:connect(function()
+            if vu108(pu88) ~= 0 then
+                if vu94 then
+                    vu94:Destroy()
+
+                    vu94 = nil
+                end
+
+                pu87.container.ClipsDescendants = false
+                vu94 = vu29:Create('Frame', {
+                    Position = UDim2.new(0, 0, 1, 0),
+                    BackgroundColor3 = Color3.fromRGB(0, 255, 255),
+                    Size = UDim2.new(0, vu92.AbsoluteSize.X, 0, vu108(pu88) * 21),
+                    BorderSizePixel = 0,
+                    Parent = vu92,
+                    ClipsDescendants = true,
+                    ZIndex = 2,
+                })
+
+                vu29:Create('UIListLayout', {
+                    Name = 'Layout',
+                    Parent = vu94,
+                })
+
+                local v109 = next
+                local v110 = pu88
+                local v111 = nil
+
+                while true do
+                    local vu112
+
+                    v111, vu112 = v109(v110, v111)
+
+                    if v111 == nil then
+                        break
+                    end
+
+                    vu29:Create('TextButton', {
+                        Text = vu112,
+                        BackgroundColor3 = Color3.fromRGB(40, 40, 40),
+                        TextColor3 = Color3.fromRGB(255, 255, 255),
+                        BorderSizePixel = 0,
+                        TextSize = 14,
+                        Font = Enum.Font.FredokaOne,
+                        Size = UDim2.new(1, 0, 0, 21),
+                        Parent = vu94,
+                        ZIndex = 2,
+                    }).MouseButton1Click:connect(function()
+                        vu92.Text = vu112
+
+                        vu91(vu112)
+
+                        vu94.Size = UDim2.new(1, 0, 0, 0)
+
+                        game:GetService('Debris'):AddItem(vu94, 0.1)
+                    end)
+                end
+            end
+        end)
+        game:GetService('UserInputService').InputBegan:connect(function(p113)
+            if p113.UserInputType == Enum.UserInputType.MouseButton1 and (vu94 and not vu102(vu94)) then
+                game:GetService('Debris'):AddItem(vu94)
+            end
+        end)
+        vu91(v90)
+        pu87:Resize()
+
+        return {
+            Refresh = function(_, p114)
+                game:GetService('Debris'):AddItem(vu94)
+
+                pu88 = p114
+                vu92.Text = pu88[1]
+            end,
+        }
+    end
+
+    return vu54
+end
