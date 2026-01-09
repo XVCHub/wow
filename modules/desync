@@ -1,0 +1,126 @@
+local module = {}
+local enabled = false
+local orb = nil
+local orb_pos = nil
+
+local rng = function(len)
+    local chars = "!@#$%^&*()_+-=[]{}|;:,.<>?"
+    local result = ""
+    for i = 1, len do
+        local n = math.random(1, #chars)
+        result = result .. chars:sub(n, n)
+    end
+    return result
+end
+
+local notify = function(text)
+    if getgenv().notify then
+        getgenv().notify("desync", text)
+    end
+end
+
+local make_orb = function(pos)
+    if orb then orb:Destroy() end
+    orb = Instance.new("Part")
+    orb.Name = rng(8)
+    orb.Size = Vector3.new(4, 4, 4)
+    orb.Shape = Enum.PartType.Ball
+    orb.Material = Enum.Material.Neon
+    orb.Color = Color3.fromRGB(0, 219, 40)
+    orb.Transparency = 0.4
+    orb.CanCollide = false
+    orb.Anchored = true
+    orb.CFrame = pos
+    orb.Parent = workspace
+    
+    local light = Instance.new("PointLight")
+    light.Brightness = 2
+    light.Range = 15
+    light.Color = Color3.fromRGB(0, 219, 40)
+    light.Parent = orb
+    
+    local billboard = Instance.new("BillboardGui")
+    billboard.Size = UDim2.new(0, 100, 0, 40)
+    billboard.StudsOffset = Vector3.new(0, 5, 0)
+    billboard.AlwaysOnTop = true
+    billboard.Parent = orb
+    
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.Text = "you"
+    label.TextColor3 = Color3.fromRGB(0, 255, 0)
+    label.TextSize = 18
+    label.Font = Enum.Font.Code
+    label.TextStrokeTransparency = 0.5
+    label.Parent = billboard
+    
+    task.spawn(function()
+        while orb and orb.Parent do
+            for i = 3, 5, 0.1 do
+                if not orb or not orb.Parent then break end
+                orb.Size = Vector3.new(i, i, i)
+                task.wait(0.05)
+            end
+            for i = 5, 3, -0.1 do
+                if not orb or not orb.Parent then break end
+                orb.Size = Vector3.new(i, i, i)
+                task.wait(0.05)
+            end
+        end
+    end)
+    
+    return orb
+end
+
+local do_desync = function()
+    local plrs = game:GetService("Players")
+    local char = plrs.LocalPlayer.Character
+    if not char then
+        notify("character not found")
+        return false
+    end
+    
+    local root = char:FindFirstChild("HumanoidRootPart")
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if not root or not hum then
+        notify("humanoidrootpart/humanoid not found")
+        return false
+    end
+    
+    if hum.Health <= 0 then
+        notify("humanoid is dead")
+        return false
+    end
+    
+    orb_pos = root.CFrame
+    make_orb(orb_pos)
+    
+    pcall(function() setfflag("NextGenReplicatorEnabledWrite4", "false") end)
+    task.wait(0.543)
+    pcall(function() setfflag("NextGenReplicatorEnabledWrite4", "true") end)
+    task.wait(0.1)
+    root.CFrame = orb_pos
+    
+    notify("desync enabled")
+    return true
+end
+
+function module:enable()
+    if enabled then return end
+    enabled = true
+    do_desync()
+end
+
+function module:disable()
+    if not enabled then return end
+    enabled = false
+    
+    pcall(function() setfflag("NextGenReplicatorEnabledWrite4", "false") end)
+    if orb then orb:Destroy() orb = nil end
+    orb_pos = nil
+    
+    notify("desync disabled")
+end
+
+return module
