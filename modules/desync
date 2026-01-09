@@ -106,13 +106,13 @@ local do_desync = function()
     return true
 end
 
-function module:enable()
+module.enable = function()
     if enabled then return end
     enabled = true
     do_desync()
 end
 
-function module:disable()
+module.disable = function()
     if not enabled then return end
     enabled = false
     
