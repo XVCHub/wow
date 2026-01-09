@@ -14,8 +14,12 @@ local rng = function(len)
 end
 
 local notify = function(text)
-    if getgenv().notify then
-        getgenv().notify("desync", text)
+    if getgenv().notify == true then
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "desync",
+            Text = text,
+            Duration = 3
+        })
     end
 end
 
