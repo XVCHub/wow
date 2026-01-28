@@ -1,0 +1,45 @@
+local rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/XVCHub/library/main/rayfield'))()
+
+local window = rayfield:CreateWindow({
+    Name = "tora scripts",
+    LoadingTitle = "tora scripts",
+	  LoadingSubtitle = "egirlswow.pages.dev",
+})
+
+local setclipboard = setclipboard or toclipboard or (Clipboard and Clipboard.set)
+local api_url = "https://api.github.com/repos/gumanba/Scripts/contents"
+local base_url = "https://raw.githubusercontent.com/gumanba/Scripts/main/"
+local response = game:HttpGet(api_url)
+local files = game:GetService("HttpService"):JSONDecode(response)
+
+local scriptstab = window:CreateTab("scripts")
+
+for _, file in files do
+    if file.type == "file" then
+        local script_name = file.name
+        local script_url = base_url .. script_name
+        scriptstab:CreateButton({
+            Name = script_name,
+            Callback = function()
+                loadstring(game:HttpGet(script_url))() 
+            end    
+        })
+    end
+end
+
+local copyscriptstab = window:CreateTab("copy scripts")
+
+for _, file in files do
+    if file.type == "file" then
+        local script_name = file.name
+        local script_url = base_url .. script_name
+        copyscriptstab:CreateButton({
+            Name = script_name,
+            Callback = function()
+                setclipboard(`loadstring(game:HttpGet("{script_url}"))()`)
+            end    
+        })
+    end
+end
+
+window:CreateTab("destroy"):CreateButton({Name = "Destroy Hub",Callback = function()rayfield:Destroy()end})
