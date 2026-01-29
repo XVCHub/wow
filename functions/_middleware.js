@@ -258,193 +258,208 @@ function getExplorerPage() {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Explorer</title>
+    <title>25ms Explorer</title>
     <link rel="icon" type="image/png" href="/icon.png">
     <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.37.1/min/vs/loader.js"></script>
     
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: #e4e4e7;
-            min-height: 100vh;
-            padding: 20px;
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #121212;
+            color: #e0e0e0;
+            overflow-x: hidden;
         }
-        
         .content-wrapper {
-            max-width: 1400px;
-            margin: 0 auto;
             opacity: 0;
-            animation: fadeIn 0.6s ease forwards;
+            transform: translateY(50px);
+            animation: slideUp 0.8s ease forwards;
         }
-        
+        @keyframes slideUp {
+            0% {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @keyframes slideInRight {
+            0% {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        @keyframes slideInLeft {
+            0% {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
-        
+        @keyframes scaleIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        @keyframes scaleOut {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+        }
         h1 {
-            color: #60a5fa;
-            font-size: 2em;
-            margin-bottom: 20px;
-            text-shadow: 0 2px 10px rgba(96, 165, 250, 0.3);
+            color: #e0e0e0;
         }
-        
         .breadcrumb {
             display: flex;
             align-items: center;
-            margin-bottom: 20px;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 12px 16px;
-            border-radius: 10px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 15px;
+            background-color: #1e1e1e;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
-        
         .breadcrumb-item {
-            color: #60a5fa;
+            display: flex;
+            align-items: center;
+            color: #80cbc4;
             text-decoration: none;
-            transition: all 0.2s;
-            padding: 4px 8px;
-            border-radius: 4px;
+            transition: color 0.3s ease;
+            margin-right: 10px;
         }
-        
-        .breadcrumb-item:hover {
-            background: rgba(96, 165, 250, 0.1);
-            color: #93c5fd;
-        }
-        
         .breadcrumb-item:not(:last-child)::after {
             content: '›';
-            color: #71717a;
-            margin: 0 8px;
+            color: #666;
+            margin-left: 10px;
+            font-size: 1.2em;
         }
-        
+        .breadcrumb-item:hover {
+            color: #ffffff;
+        }
+        .breadcrumb-item:hover::after {
+            color: #666;
+        }
         .breadcrumb-item.active {
-            color: #f3f4f6;
-            font-weight: 600;
+            color: #ffffff;
+            font-weight: bold;
         }
-        
-        #table-container {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            overflow: hidden;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
         table {
             width: 100%;
             border-collapse: collapse;
+            margin-top: 18px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 1px 25px 50px rgba(24, 133, 160, 0.637);
         }
-        
-        th {
-            background: rgba(96, 165, 250, 0.1);
-            color: #60a5fa;
-            font-weight: 600;
-            padding: 16px;
+        th, td {
+            border: 1px solid #444;
+            padding: 8px;
             text-align: left;
-            border-bottom: 2px solid rgba(96, 165, 250, 0.2);
         }
-        
-        td {
-            padding: 14px 16px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        th {
+            background-color: #333;
         }
-        
         tr {
-            transition: all 0.2s;
+            opacity: 0;
+            animation: fadeIn 0.3s ease forwards;
         }
-        
+        tr:nth-child(even) {
+            background-color: #1d1d1d;
+        }
+        tr:nth-child(odd) {
+            background-color: #222;
+        }
         tr:hover {
-            background: rgba(96, 165, 250, 0.05);
+            background-color: #444;
         }
-        
+        a {
+            text-decoration: none;
+        }
         .directory-link {
-            color: #60a5fa;
-            text-decoration: none;
-            font-weight: 500;
-            transition: color 0.2s;
+            color: #80cbc4;
+            transition: color 0.3s ease;
         }
-        
         .directory-link:hover {
-            color: #93c5fd;
+            color: #ffffff;
             text-decoration: underline;
         }
-        
         .file-link {
-            color: #c084fc;
-            text-decoration: none;
-            font-weight: 500;
-            transition: color 0.2s;
+            color: #ab6dd4;
+            transition: color 0.3s ease;
         }
-        
         .file-link:hover {
-            color: #e9d5ff;
+            color: #ffffff;
             text-decoration: underline;
         }
-        
         #file-viewer {
             display: none;
-            margin-top: 20px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            padding: 20px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        #file-viewer h2 {
-            color: #60a5fa;
-            margin: 15px 0;
-            font-size: 1.3em;
-        }
-        
-        .viewer-actions {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-        
-        .viewer-btn {
-            padding: 8px 16px;
+            margin-top: 15px;
+            padding: 10px;
+            border: 1px solid #444;
             border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 0.9em;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            background: rgba(255, 255, 255, 0.05);
+            background-color: #2c2c2c;
+            animation: scaleIn 0.3s ease forwards;
+            box-shadow: 1px 25px 50px rgba(24, 133, 160, 0.637);
         }
-        
-        .viewer-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: translateY(-2px);
+        .file-viewer-exit {
+            animation: scaleOut 0.3s ease forwards !important;
         }
-        
+        #file-viewer pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            color: #e0e0e0;
+        }
         #close-viewer {
-            color: #f87171;
+            display: block;
+            margin-bottom: 10px;
+            color: #f44336;
+            cursor: pointer;
+            transition: transform 0.2s ease;
         }
-        
-        #view-src {
-            color: #60a5fa;
+        #close-viewer:hover {
+            transform: scale(1.003);
         }
-        
-        #copy-button {
-            color: #34d399;
+        #view-src,#copy-button {
+            display: block;
+            margin-bottom: 10px;
+            color: #878787;
+            cursor: pointer;
+            transition: transform 0.2s ease;
         }
-        
+        #view-src:hover,#copy-button:hover {
+            transform: scale(1.003);
+        }
+        .slide-in-right {
+            animation: slideInRight 0.1s ease forwards;
+        }
+        .slide-in-left {
+            animation: slideInLeft 0.1s ease forwards;
+        }
         #editor {
             width: 100%;
             height: 500px;
-            border-radius: 8px;
-            overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.1);
         }
     </style>
 </head>
@@ -464,22 +479,25 @@ function getExplorerPage() {
                 </tbody>
             </table>
         </div>
-        <div id="file-viewer">
-            <div class="viewer-actions">
-                <span id="view-src" class="viewer-btn">👁️ View Source</span>
-                <span id="copy-button" class="viewer-btn">📋 Copy Script</span>
-                <span id="close-viewer" class="viewer-btn">❌ Close</span>
-            </div>
+        <div id="file-viewer" style="display: none;">
+            <span id="view-src">👁️ View Source</span>
+            <span id="close-viewer">❌ Close</span>
+            <span id="copy-button">🥵 Copy Script</span>
             <h2>Load this script!</h2>
             <div id="editor"></div>
         </div>
     </div>
 
     <script>
+        const GITHUB_REPO = 'XVCHub/wow';
+        const GITHUB_BRANCH = 'main';
+        const HIDDEN_FOLDERS = ['functions'];
+        
         let viewing = false;
         let currentfilepath = "";
         let directoryData = {};
         let currentPath = "";
+        let isNavigatingForward = true;
         let editor;
 
         function loadMonaco() {
@@ -497,16 +515,12 @@ function getExplorerPage() {
             try {
                 await loadMonaco();
                 editor = monaco.editor.create(document.getElementById('editor'), {
-                    value: \`-- Loading...\`,
+                    value: \`-- Your Lua code goes here\\nprint("Hello World!")\`,
                     language: 'lua',
                     theme: 'vs-dark',
                     readOnly: true,
-                    wordWrap: 'on',
-                    minimap: { enabled: false },
-                    fontSize: 14,
-                    lineNumbers: 'on',
-                    scrollBeyondLastLine: false,
-                    automaticLayout: true
+                    wordWrap: true,
+                    minimap: { enabled: false }
                 });
             } catch (error) {
                 console.error("Failed to load Monaco:", error);
@@ -573,7 +587,6 @@ function getExplorerPage() {
                     link.textContent = part;
                     link.classList.add("breadcrumb-item");
                     link.onclick = (e) => {
-                        e.preventDefault();
                         navigateTo(currentPathSegment);
                     };
                     breadcrumbContainer.appendChild(link);
@@ -581,13 +594,35 @@ function getExplorerPage() {
             });
         }
 
+        async function buildDirectoryStructure(path = '') {
+            const apiUrl = \`https://api.github.com/repos/\${GITHUB_REPO}/contents/\${path}\`;
+            const response = await fetch(apiUrl, {
+                headers: { 'User-Agent': 'Cloudflare-Worker' }
+            });
+            
+            if (!response.ok) {
+                return { directories: {}, files: [] };
+            }
+            
+            const items = await response.json();
+            const structure = { directories: {}, files: [] };
+            
+            for (const item of items) {
+                if (HIDDEN_FOLDERS.includes(item.name)) continue;
+                
+                if (item.type === 'dir') {
+                    structure.directories[item.name] = await buildDirectoryStructure(\`\${path ? path + '/' : ''}\${item.name}\`);
+                } else if (item.type === 'file') {
+                    structure.files.push(item.name);
+                }
+            }
+            
+            return structure;
+        }
+
         async function fetchDirectoryData() {
             try {
-                const response = await fetch('https://you.whimper.xyz/explorer/data.json');
-                if (!response.ok) {
-                    throw new Error(\`Failed to load directory data: \${response.status}\`);
-                }
-                directoryData = await response.json();
+                directoryData = await buildDirectoryStructure();
                 
                 const initialPath = getPathFromHash();
                 if (initialPath) {
@@ -632,31 +667,40 @@ function getExplorerPage() {
 
             const data = getNestedData(path);
 
-            Object.keys(data.directories || {}).forEach(dir => {
+            let delay = 0;
+            Object.keys(data.directories).forEach(dir => {
                 const row = document.createElement("tr");
+                row.style.animationDelay = \`\${delay}ms\`;
+                delay += 20;
+
                 const nameCell = document.createElement("td");
                 const typeCell = document.createElement("td");
 
                 const newPath = path ? path + '/' + dir : dir;
-                nameCell.innerHTML = \`<a href="#\${newPath}" onclick="navigateTo('\${newPath}', event)" class="directory-link">📁 \${dir}</a>\`;
-                typeCell.textContent = "Directory";
+                nameCell.innerHTML = \`<a href="#\${newPath}" onclick="navigateTo('\${newPath}', event)" class="directory-link">\${dir}</a>\`;
+                typeCell.textContent = "directory";
 
                 row.appendChild(nameCell);
                 row.appendChild(typeCell);
+                row.classList.add(isNavigatingForward ? 'slide-in-right' : 'slide-in-left');
                 tableBody.appendChild(row);
             });
 
-            (data.files || []).forEach(file => {
+            data.files.forEach(file => {
                 const row = document.createElement("tr");
+                row.style.animationDelay = \`\${delay}ms\`;
+                delay += 20;
+
                 const nameCell = document.createElement("td");
                 const typeCell = document.createElement("td");
 
                 const newFilePath = path ? path + '/' + file : file;
-                nameCell.innerHTML = \`<a href="#\${newFilePath}" onclick="viewFile('\${newFilePath}', event)" class="file-link">📄 \${file}</a>\`;
-                typeCell.textContent = "File";
+                nameCell.innerHTML = \`<a href="#\${newFilePath}" onclick="viewFile('\${newFilePath}', event)" class="file-link">\${file}</a>\`;
+                typeCell.textContent = "file";
 
                 row.appendChild(nameCell);
                 row.appendChild(typeCell);
+                row.classList.add(isNavigatingForward ? 'slide-in-right' : 'slide-in-left');
                 tableBody.appendChild(row);
             });
         }
@@ -670,16 +714,14 @@ function getExplorerPage() {
             const tableContainer = document.getElementById("table-container");
             tableContainer.style.display = "none";
 
-            const content = \`loadstring(game:HttpGet("https://you.whimper.xyz/\${filePath}"))()\\n\\n-- click 'View Source' to see the actual code\`;
+            const baseUrl = window.location.origin;
+            const content = \`loadstring(game:HttpGet("\${baseUrl}/\${filePath}"))()\\n\`;
             document.getElementById("file-viewer").style.display = "block";
-            
-            if (editor) {
-                editor.setValue(content);
-                editor.layout();
-            }
-            
+            editor.layout();
+            editor.setValue(content);
             renderBreadcrumb(filePath);
             updateHash(filePath);
+
             currentfilepath = filePath;
         }
 
@@ -702,36 +744,32 @@ function getExplorerPage() {
         document.getElementById("close-viewer").onclick = () => {
             document.getElementById("view-src").textContent = "👁️ View Source";
             viewing = false;
-            document.getElementById("file-viewer").style.display = "none";
-            navigateTo(currentPath.split("/").slice(0, -1).join("/"));
+            const fileViewer = document.getElementById("file-viewer");
+            fileViewer.classList.add('file-viewer-exit');
+            setTimeout(() => {
+                fileViewer.style.display = "none";
+                fileViewer.classList.remove('file-viewer-exit');
+                navigateTo(currentPath.split("/").slice(0, -1).join("/"));
+            }, 300);
         };
 
         document.getElementById("copy-button").onclick = () => {
-            if (editor) {
-                navigator.clipboard.writeText(editor.getValue());
-            }
+            navigator.clipboard.writeText(editor.getValue());
         };
 
         document.getElementById("view-src").onclick = () => {
             viewing = !viewing;
             const viewer = document.getElementById("view-src");
+            const baseUrl = window.location.origin;
 
             if (viewing) {
-                viewer.textContent = "🔒 View Loadstring";
-                if (editor) {
-                    editor.setValue("-- Fetching source code...");
-                }
-                fetch(\`https://you.whimper.xyz/\${currentfilepath}\`)
-                    .then(a => a.text())
-                    .then(b => {
-                        if (editor) {
-                            editor.setValue(b);
-                        }
-                    });
+                viewer.textContent = "🔐 View loadstring";
+                editor.setValue("-- Fetching..");
+                fetch(\`\${baseUrl}/\${currentfilepath}\`).then(a => a.text()).then(b => {
+                    editor.setValue(b);
+                });
             } else {
-                if (editor) {
-                    editor.setValue(\`loadstring(game:HttpGet("https://you.whimper.xyz/\${currentfilepath}"))()\\n\\n-- click 'View Source' to see the actual code\`);
-                }
+                editor.setValue(\`loadstring(game:HttpGet("\${baseUrl}/\${currentfilepath}"))()\\n\`);
                 viewer.textContent = "👁️ View Source";
             }
         };
