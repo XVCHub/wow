@@ -1,0 +1,1186 @@
+local PlayerService = game:GetService('Players')
+local InputService = game:GetService('UserInputService')
+local HttpService = game:GetService('HttpService')
+local TweenService = game:GetService('TweenService')
+local LocalPlayer = PlayerService.LocalPlayer
+local PlayerGui = PlayerService.LocalPlayer:WaitForChild('PlayerGui')
+
+pcall(function()
+    if PlayerGui:FindFirstChild('UGCEmotes') then
+        PlayerGui:FindFirstChild('UGCEmotes'):Destroy()
+    end
+end)
+
+local EmotesScreen = Instance.new('ScreenGui')
+
+EmotesScreen.Name = 'UGCEmotes'
+EmotesScreen.Parent = PlayerGui
+
+local EmotesFrame = Instance.new('Frame')
+
+EmotesFrame.Size = UDim2.new(0, 280, 0, 350)
+EmotesFrame.Position = UDim2.new(0.5, -140, 0.5, -175)
+EmotesFrame.BackgroundColor3 = Color3.new(0, 0, 0)
+EmotesFrame.BackgroundTransparency = 0.6
+EmotesFrame.BorderSizePixel = 0
+EmotesFrame.Parent = EmotesScreen
+
+local EmotesCorner = Instance.new('UICorner')
+
+EmotesCorner.CornerRadius = UDim.new(0, 15)
+EmotesCorner.Parent = EmotesFrame
+
+local EmotesHeader = Instance.new('Frame')
+
+EmotesHeader.Size = UDim2.new(1, 0, 0, 30)
+EmotesHeader.Position = UDim2.new(0, 0, 0, 0)
+EmotesHeader.BackgroundTransparency = 1
+EmotesHeader.BorderSizePixel = 0
+EmotesHeader.Parent = EmotesFrame
+
+local EmotesLabel = Instance.new('TextLabel')
+
+EmotesLabel.Size = UDim2.new(1, -60, 1, 0)
+EmotesLabel.Position = UDim2.new(0, 30, 0, 0)
+EmotesLabel.BackgroundTransparency = 1
+EmotesLabel.Text = 'UGC Emotes'
+EmotesLabel.TextColor3 = Color3.new(1, 1, 1)
+EmotesLabel.TextSize = 16
+EmotesLabel.Font = Enum.Font.Gotham
+EmotesLabel.TextXAlignment = Enum.TextXAlignment.Center
+EmotesLabel.Parent = EmotesHeader
+
+local MinimizeButton = Instance.new('TextButton')
+
+MinimizeButton.Size = UDim2.new(0, 22, 0, 22)
+MinimizeButton.Position = UDim2.new(1, -48, 0, 4)
+MinimizeButton.BackgroundColor3 = Color3.new(0, 0, 0)
+MinimizeButton.BackgroundTransparency = 0.7
+MinimizeButton.Text = '\u{2212}'
+MinimizeButton.TextColor3 = Color3.new(1, 1, 1)
+MinimizeButton.TextScaled = true
+MinimizeButton.Font = Enum.Font.Gotham
+MinimizeButton.BorderSizePixel = 0
+MinimizeButton.Parent = EmotesHeader
+
+local Corner1 = Instance.new('UICorner')
+
+Corner1.CornerRadius = UDim.new(0, 10)
+Corner1.Parent = MinimizeButton
+
+local Button1 = Instance.new('TextButton')
+
+Button1.Size = UDim2.new(0, 22, 0, 22)
+Button1.Position = UDim2.new(1, -24, 0, 4)
+Button1.BackgroundColor3 = Color3.new(0, 0, 0)
+Button1.BackgroundTransparency = 0.7
+Button1.Text = '\u{d7}'
+Button1.TextColor3 = Color3.new(1, 1, 1)
+Button1.TextScaled = true
+Button1.Font = Enum.Font.Gotham
+Button1.BorderSizePixel = 0
+Button1.Parent = EmotesHeader
+
+local Corner2 = Instance.new('UICorner')
+
+Corner2.CornerRadius = UDim.new(0, 10)
+Corner2.Parent = Button1
+
+local Label1 = Instance.new('TextLabel')
+
+Label1.Size = UDim2.new(1, -16, 0, 12)
+Label1.Position = UDim2.new(0, 8, 0, 32)
+Label1.BackgroundTransparency = 1
+Label1.Text = 'Loading...'
+Label1.TextColor3 = Color3.new(0.7, 0.7, 0.7)
+Label1.TextSize = 10
+Label1.Font = Enum.Font.Gotham
+Label1.Parent = EmotesFrame
+
+local Frame1 = Instance.new('Frame')
+
+Frame1.Size = UDim2.new(1, -16, 0, 25)
+Frame1.Position = UDim2.new(0, 8, 0, 48)
+Frame1.BackgroundTransparency = 1
+Frame1.Parent = EmotesFrame
+
+local Button2 = Instance.new('TextButton')
+
+Button2.Size = UDim2.new(0.33, -2, 1, 0)
+Button2.Position = UDim2.new(0, 0, 0, 0)
+Button2.BackgroundColor3 = Color3.new(0, 0, 0)
+Button2.BackgroundTransparency = 0.7
+Button2.Text = 'All'
+Button2.TextColor3 = Color3.new(1, 1, 1)
+Button2.TextSize = 12
+Button2.Font = Enum.Font.Gotham
+Button2.BorderSizePixel = 0
+Button2.Parent = Frame1
+
+local Button3 = Instance.new('TextButton')
+
+Button3.Size = UDim2.new(0.33, -2, 1, 0)
+Button3.Position = UDim2.new(0.33, 2, 0, 0)
+Button3.BackgroundColor3 = Color3.new(0, 0, 0)
+Button3.BackgroundTransparency = 0.8
+Button3.Text = 'Favorites'
+Button3.TextColor3 = Color3.new(1, 1, 1)
+Button3.TextSize = 12
+Button3.Font = Enum.Font.Gotham
+Button3.BorderSizePixel = 0
+Button3.Parent = Frame1
+
+local Button4 = Instance.new('TextButton')
+
+Button4.Size = UDim2.new(0.33, -2, 1, 0)
+Button4.Position = UDim2.new(0.66, 4, 0, 0)
+Button4.BackgroundColor3 = Color3.new(0, 0, 0)
+Button4.BackgroundTransparency = 0.8
+Button4.Text = 'Custom'
+Button4.TextColor3 = Color3.new(1, 1, 1)
+Button4.TextSize = 12
+Button4.Font = Enum.Font.Gotham
+Button4.BorderSizePixel = 0
+Button4.Parent = Frame1
+
+local Corner3 = Instance.new('UICorner')
+
+Corner3.CornerRadius = UDim.new(0, 10)
+Corner3.Parent = Button2
+
+local Corner4 = Instance.new('UICorner')
+
+Corner4.CornerRadius = UDim.new(0, 10)
+Corner4.Parent = Button3
+
+local Corner5 = Instance.new('UICorner')
+
+Corner5.CornerRadius = UDim.new(0, 10)
+Corner5.Parent = Button4
+
+local InputField = Instance.new('TextBox')
+
+InputField.Size = UDim2.new(1, -16, 0, 22)
+InputField.Position = UDim2.new(0, 8, 0, 78)
+InputField.BackgroundColor3 = Color3.new(0, 0, 0)
+InputField.BackgroundTransparency = 0.5
+InputField.Text = ''
+InputField.PlaceholderText = 'Search...'
+InputField.TextColor3 = Color3.new(1, 1, 1)
+InputField.PlaceholderColor3 = Color3.new(0.7, 0.7, 0.7)
+InputField.TextSize = 11
+InputField.Font = Enum.Font.Gotham
+InputField.BorderSizePixel = 0
+InputField.Parent = EmotesFrame
+
+local Corner6 = Instance.new('UICorner')
+
+Corner6.CornerRadius = UDim.new(0, 10)
+Corner6.Parent = InputField
+
+local Frame2 = Instance.new('Frame')
+
+Frame2.Size = UDim2.new(1, -16, 0, 50)
+Frame2.Position = UDim2.new(0, 8, 0, 105)
+Frame2.BackgroundTransparency = 1
+Frame2.Visible = false
+Frame2.Parent = EmotesFrame
+
+local InputField1 = Instance.new('TextBox')
+
+InputField1.Size = UDim2.new(1, 0, 0, 20)
+InputField1.Position = UDim2.new(0, 0, 0, 0)
+InputField1.BackgroundColor3 = Color3.new(0, 0, 0)
+InputField1.BackgroundTransparency = 0.5
+InputField1.Text = ''
+InputField1.PlaceholderText = 'Animation Name...'
+InputField1.TextColor3 = Color3.new(1, 1, 1)
+InputField1.PlaceholderColor3 = Color3.new(0.7, 0.7, 0.7)
+InputField1.TextSize = 11
+InputField1.Font = Enum.Font.Gotham
+InputField1.BorderSizePixel = 0
+InputField1.Parent = Frame2
+
+local Corner7 = Instance.new('UICorner')
+
+Corner7.CornerRadius = UDim.new(0, 10)
+Corner7.Parent = InputField1
+
+local InputField2 = Instance.new('TextBox')
+
+InputField2.Size = UDim2.new(0.7, -2, 0, 20)
+InputField2.Position = UDim2.new(0, 0, 0, 25)
+InputField2.BackgroundColor3 = Color3.new(0, 0, 0)
+InputField2.BackgroundTransparency = 0.5
+InputField2.Text = ''
+InputField2.PlaceholderText = 'Animation ID...'
+InputField2.TextColor3 = Color3.new(1, 1, 1)
+InputField2.PlaceholderColor3 = Color3.new(0.7, 0.7, 0.7)
+InputField2.TextSize = 11
+InputField2.Font = Enum.Font.Gotham
+InputField2.BorderSizePixel = 0
+InputField2.Parent = Frame2
+
+local Corner8 = Instance.new('UICorner')
+
+Corner8.CornerRadius = UDim.new(0, 10)
+Corner8.Parent = InputField2
+
+local Button5 = Instance.new('TextButton')
+
+Button5.Size = UDim2.new(0.3, 0, 0, 20)
+Button5.Position = UDim2.new(0.7, 2, 0, 25)
+Button5.BackgroundColor3 = Color3.new(0, 0.5, 0)
+Button5.BackgroundTransparency = 0.3
+Button5.Text = 'Add'
+Button5.TextColor3 = Color3.new(1, 1, 1)
+Button5.TextSize = 11
+Button5.Font = Enum.Font.Gotham
+Button5.BorderSizePixel = 0
+Button5.Parent = Frame2
+
+local Corner9 = Instance.new('UICorner')
+
+Corner9.CornerRadius = UDim.new(0, 10)
+Corner9.Parent = Button5
+
+local EmotesList = Instance.new('ScrollingFrame')
+
+EmotesList.Size = UDim2.new(1, -16, 1, -140)
+EmotesList.Position = UDim2.new(0, 8, 0, 105)
+EmotesList.BackgroundTransparency = 1
+EmotesList.ScrollBarThickness = 4
+EmotesList.ScrollBarImageColor3 = Color3.new(1, 1, 1)
+EmotesList.ScrollBarImageTransparency = 0.5
+EmotesList.BorderSizePixel = 0
+EmotesList.ScrollingDirection = Enum.ScrollingDirection.Y
+EmotesList.Parent = EmotesFrame
+
+local EmotesLayout = Instance.new('UIListLayout')
+
+EmotesLayout.Padding = UDim.new(0, 3)
+EmotesLayout.SortOrder = Enum.SortOrder.LayoutOrder
+EmotesLayout.Parent = EmotesList
+
+local Frame3 = Instance.new('Frame')
+
+Frame3.Size = UDim2.new(1, -16, 0, 25)
+Frame3.Position = UDim2.new(0, 8, 1, -30)
+Frame3.BackgroundTransparency = 1
+Frame3.Parent = EmotesFrame
+
+local Label2 = Instance.new('TextLabel')
+
+Label2.Size = UDim2.new(0, 40, 1, 0)
+Label2.Position = UDim2.new(0, 0, 0, 0)
+Label2.BackgroundTransparency = 1
+Label2.Text = 'Speed:'
+Label2.TextColor3 = Color3.new(1, 1, 1)
+Label2.TextSize = 10
+Label2.Font = Enum.Font.Gotham
+Label2.TextXAlignment = Enum.TextXAlignment.Left
+Label2.Parent = Frame3
+
+local Frame4 = Instance.new('Frame')
+
+Frame4.Size = UDim2.new(1, -130, 0, 4)
+Frame4.Position = UDim2.new(0, 45, 0.5, -2)
+Frame4.BackgroundColor3 = Color3.new(0, 0, 0)
+Frame4.BackgroundTransparency = 0.5
+Frame4.BorderSizePixel = 0
+Frame4.Parent = Frame3
+
+local Corner10 = Instance.new('UICorner')
+
+Corner10.CornerRadius = UDim.new(0, 2)
+Corner10.Parent = Frame4
+
+local Frame5 = Instance.new('Frame')
+
+Frame5.Size = UDim2.new(0, 12, 0, 12)
+Frame5.Position = UDim2.new(0.5, -6, 0.5, -6)
+Frame5.BackgroundColor3 = Color3.new(1, 1, 1)
+Frame5.BackgroundTransparency = 0.2
+Frame5.BorderSizePixel = 0
+Frame5.Parent = Frame4
+
+local Corner11 = Instance.new('UICorner')
+
+Corner11.CornerRadius = UDim.new(0, 6)
+Corner11.Parent = Frame5
+
+local Label3 = Instance.new('TextLabel')
+
+Label3.Size = UDim2.new(0, 35, 1, 0)
+Label3.Position = UDim2.new(1, -70, 0, 0)
+Label3.BackgroundTransparency = 1
+Label3.Text = '1.0x'
+Label3.TextColor3 = Color3.new(1, 1, 1)
+Label3.TextSize = 10
+Label3.Font = Enum.Font.Gotham
+Label3.TextXAlignment = Enum.TextXAlignment.Right
+Label3.Parent = Frame3
+
+local Button6 = Instance.new('TextButton')
+
+Button6.Size = UDim2.new(0, 30, 0, 16)
+Button6.Position = UDim2.new(1, -30, 0.5, -8)
+Button6.BackgroundColor3 = Color3.new(0, 0, 0)
+Button6.BackgroundTransparency = 0.5
+Button6.Text = 'Reset'
+Button6.TextColor3 = Color3.new(1, 1, 1)
+Button6.TextSize = 8
+Button6.Font = Enum.Font.Gotham
+Button6.BorderSizePixel = 0
+Button6.Parent = Frame3
+
+local Corner12 = Instance.new('UICorner')
+
+Corner12.CornerRadius = UDim.new(0, 8)
+Corner12.Parent = Button6
+
+local Unknown1 = {}
+local Unknown2 = {}
+local Unknown3 = {}
+local Unknown4 = {}
+local AllValue = 'all'
+local NilValue1 = nil
+local NilValue2 = nil
+local OneValue = 1
+local FalseValue1 = false
+local FalseValue2 = false
+local EmotesData = {
+    Label1,
+    Frame1,
+    InputField,
+    EmotesList,
+    Frame3,
+    Frame2,
+}
+
+local function Func1()
+    pcall(function()
+        if writefile then
+            local PairKey, PairValue, PairIndex = pairs(Unknown2)
+            local JsonValue = {}
+
+            while true do
+                local UnknownValue
+
+                PairIndex, UnknownValue = PairKey(PairValue, PairIndex)
+
+                if PairIndex == nil then
+                    break
+                end
+                if UnknownValue then
+                    JsonValue[tostring(PairIndex)] = true
+                end
+            end
+
+            local EncodedJson = HttpService:JSONEncode(JsonValue)
+
+            writefile('ugc_emotes_favorites.json', EncodedJson)
+        end
+    end)
+end
+local function Func2()
+    pcall(function()
+        if writefile then
+            local DecodedJson = HttpService:JSONEncode(Unknown4)
+
+            writefile('ugc_emotes_custom.json', DecodedJson)
+        end
+    end)
+end
+local function Func3()
+    pcall(function()
+        if readfile and (isfile and isfile('ugc_emotes_favorites.json')) then
+            local FavoritesJson = readfile('ugc_emotes_favorites.json')
+
+            if FavoritesJson and (FavoritesJson ~= '' and FavoritesJson ~= 'null') then
+                local DecodedFavorites, FavoritesData = pcall(function()
+                    return HttpService:JSONDecode(FavoritesJson)
+                end)
+
+                if DecodedFavorites and type(FavoritesData) == 'table' then
+                    Unknown2 = {}
+
+                    local FavoritesKey, FavoritesValue, FavoritesIndex = pairs(FavoritesData)
+
+                    while true do
+                        local UnknownData
+
+                        FavoritesIndex, UnknownData = FavoritesKey(FavoritesValue, FavoritesIndex)
+
+                        if FavoritesIndex == nil then
+                            break
+                        end
+                        if UnknownData then
+                            Unknown2[tonumber(FavoritesIndex) or FavoritesIndex] = true
+                        end
+                    end
+                end
+            end
+        end
+    end)
+end
+local function Func4()
+    pcall(function()
+        if readfile and (isfile and isfile('ugc_emotes_custom.json')) then
+            local CustomJson = readfile('ugc_emotes_custom.json')
+
+            if CustomJson and (CustomJson ~= '' and CustomJson ~= 'null') then
+                local DecodedCustom, CustomData = pcall(function()
+                    return HttpService:JSONDecode(CustomJson)
+                end)
+
+                if DecodedCustom and type(CustomData) == 'table' then
+                    Unknown4 = CustomData
+                end
+            end
+        end
+    end)
+end
+
+Func3()
+Func4()
+
+local function Func5(Param1, Param2)
+    local CharacterModel = LocalPlayer.Character
+    local CharacterModel1 = LocalPlayer.Character
+
+    if CharacterModel1 then
+        CharacterModel1 = LocalPlayer.Character:FindFirstChild('Humanoid')
+    end
+    if CharacterModel and CharacterModel1 then
+        if NilValue1 ~= Param1 then
+            local TrackKey, TrackValue, TrackIndex = pairs(CharacterModel1:GetPlayingAnimationTracks())
+
+            while true do
+                local UnknownTrack
+
+                TrackIndex, UnknownTrack = TrackKey(TrackValue, TrackIndex)
+
+                if TrackIndex == nil then
+                    break
+                end
+                if UnknownTrack.Priority == Enum.AnimationPriority.Action then
+                    UnknownTrack:Stop()
+                end
+            end
+
+            pcall(function()
+                local AnimationAsset = Instance.new('Animation')
+
+                AnimationAsset.AnimationId = 'rbxassetid://' .. Param1
+
+                local LoadedAnimation = CharacterModel1:LoadAnimation(AnimationAsset)
+
+                LoadedAnimation.Priority = Enum.AnimationPriority.Action
+                LoadedAnimation.Looped = true
+
+                LoadedAnimation:Play()
+                LoadedAnimation:AdjustSpeed(OneValue)
+
+                LoadedAnimation.TimePosition = 0.1
+                NilValue1 = Param1
+                NilValue2 = LoadedAnimation
+                Label1.Text = 'Playing: ' .. Param2 .. ' (' .. string.format('%.2fx', OneValue) .. ')'
+                Label1.TextColor3 = Color3.new(0.5, 1, 0.5)
+
+                spawn(function()
+                    wait(2)
+
+                    Label1.Text = 'Ready'
+                    Label1.TextColor3 = Color3.new(0.7, 0.7, 0.7)
+                end)
+                AnimationAsset:Destroy()
+            end)
+        else
+            local PlayingTrack, TrackName, TrackTime = pairs(CharacterModel1:GetPlayingAnimationTracks())
+
+            while true do
+                local UnknownTime
+
+                TrackTime, UnknownTime = PlayingTrack(TrackName, TrackTime)
+
+                if TrackTime == nil then
+                    break
+                end
+                if UnknownTime.Priority == Enum.AnimationPriority.Action then
+                    UnknownTime:Stop()
+                end
+            end
+
+            NilValue1 = nil
+            NilValue2 = nil
+            Label1.Text = 'Stopped: ' .. Param2
+            Label1.TextColor3 = Color3.new(1, 1, 0.5)
+
+            spawn(function()
+                wait(2)
+
+                Label1.Text = 'Ready'
+                Label1.TextColor3 = Color3.new(0.7, 0.7, 0.7)
+            end)
+        end
+    else
+        Label1.Text = 'No character'
+        Label1.TextColor3 = Color3.new(1, 0.5, 0.5)
+
+        return
+    end
+end
+local function Func6(Param3, Param4)
+    local Frame6 = Instance.new('Frame')
+
+    Frame6.Size = UDim2.new(1, 0, 0, 35)
+    Frame6.BackgroundTransparency = 1
+    Frame6.Parent = EmotesList
+
+    local Dimension = Param4 and UDim2.new(1, -100, 1, 0) or UDim2.new(1, -70, 1, 0)
+    local Button7 = Instance.new('TextButton')
+
+    Button7.Size = Dimension
+    Button7.Position = UDim2.new(0, 0, 0, 0)
+    Button7.BackgroundColor3 = Color3.new(0, 0, 0)
+    Button7.BackgroundTransparency = 0.5
+    Button7.Text = ' ' .. Param3.name
+    Button7.TextColor3 = Color3.new(1, 1, 1)
+    Button7.TextSize = 12
+    Button7.Font = Enum.Font.Gotham
+    Button7.TextXAlignment = Enum.TextXAlignment.Left
+    Button7.BorderSizePixel = 0
+    Button7.Parent = Frame6
+
+    local Corner13 = Instance.new('UICorner')
+
+    Corner13.CornerRadius = UDim.new(0, 12)
+    Corner13.Parent = Button7
+
+    local Button8 = Instance.new('TextButton')
+
+    Button8.Size = UDim2.new(0, 32, 1, 0)
+    Button8.Position = UDim2.new(1, Param4 and -98 or -66, 0, 0)
+    Button8.BackgroundTransparency = 1
+    Button8.Text = Unknown2[Param3.id] and '\u{2605}' or '\u{2606}'
+    Button8.TextColor3 = Unknown2[Param3.id] and Color3.new(1, 0.8, 0) or Color3.new(0.7, 0.7, 0.7)
+    Button8.TextSize = 16
+    Button8.BorderSizePixel = 0
+    Button8.Parent = Frame6
+
+    local Button9 = Instance.new('TextButton')
+
+    Button9.Size = UDim2.new(0, 32, 1, 0)
+    Button9.Position = UDim2.new(1, Param4 and -64 or -32, 0, 0)
+    Button9.BackgroundTransparency = 1
+    Button9.Text = Unknown3[Param3.id] and (Unknown3[Param3.id].Name:gsub('KeyCode%.', ''):sub(1, 3) or 'Bind') or 'Bind'
+    Button9.TextColor3 = Color3.new(0.8, 0.8, 0.8)
+    Button9.TextSize = 8
+    Button9.Font = Enum.Font.Gotham
+    Button9.BorderSizePixel = 0
+    Button9.Parent = Frame6
+
+    local UnknownValue1
+
+    if Param4 then
+        UnknownValue1 = Instance.new('TextButton')
+        UnknownValue1.Size = UDim2.new(0, 30, 1, 0)
+        UnknownValue1.Position = UDim2.new(1, -30, 0, 0)
+        UnknownValue1.BackgroundColor3 = Color3.new(0.5, 0, 0)
+        UnknownValue1.BackgroundTransparency = 0.3
+        UnknownValue1.Text = 'Del'
+        UnknownValue1.TextColor3 = Color3.new(1, 1, 1)
+        UnknownValue1.TextSize = 8
+        UnknownValue1.Font = Enum.Font.Gotham
+        UnknownValue1.BorderSizePixel = 0
+        UnknownValue1.Parent = Frame6
+
+        local CornerInstance = Instance.new('UICorner')
+
+        CornerInstance.CornerRadius = UDim.new(0, 12)
+        CornerInstance.Parent = UnknownValue1
+    else
+        UnknownValue1 = nil
+    end
+
+    Button7.MouseEnter:Connect(function()
+        Button7.BackgroundTransparency = 0.3
+    end)
+    Button7.MouseLeave:Connect(function()
+        Button7.BackgroundTransparency = 0.5
+    end)
+    Button7.MouseButton1Click:Connect(function()
+        Func5(Param3.id, Param3.name)
+    end)
+    Button8.MouseButton1Click:Connect(function()
+        if Unknown2[Param3.id] then
+            Unknown2[Param3.id] = nil
+            Button8.Text = '\u{2606}'
+            Button8.TextColor3 = Color3.new(0.7, 0.7, 0.7)
+        else
+            Unknown2[Param3.id] = true
+            Button8.Text = '\u{2605}'
+            Button8.TextColor3 = Color3.new(1, 0.8, 0)
+        end
+
+        Func1()
+
+        if AllValue == 'favorites' then
+            spawn(function()
+                wait(0.1)
+                loadGUI()
+            end)
+        end
+    end)
+    Button9.MouseButton1Click:Connect(function()
+        Label1.Text = 'Press any key to bind...'
+        Label1.TextColor3 = Color3.new(1, 1, 0.5)
+
+        local UnknownVariable1 = nil
+
+        UnknownVariable1 = InputService.InputBegan:Connect(function(Parameter2, Parameter3)
+            if not Parameter3 then
+                if Parameter2.KeyCode ~= Enum.KeyCode.Unknown then
+                    Unknown3[Param3.id] = Parameter2.KeyCode
+                    Button9.Text = Parameter2.KeyCode.Name:gsub('KeyCode%.', ''):sub(1, 3)
+                    Button9.TextColor3 = Color3.new(1, 1, 1)
+                    Label1.Text = 'Bound to ' .. Parameter2.KeyCode.Name:gsub('KeyCode%.', '')
+                    Label1.TextColor3 = Color3.new(0.5, 1, 0.5)
+
+                    spawn(function()
+                        wait(2)
+
+                        Label1.Text = 'Ready'
+                        Label1.TextColor3 = Color3.new(0.7, 0.7, 0.7)
+                    end)
+                    UnknownVariable1:Disconnect()
+                end
+            end
+        end)
+    end)
+
+    if UnknownValue1 then
+        UnknownValue1.MouseEnter:Connect(function()
+            UnknownValue1.BackgroundTransparency = 0.1
+        end)
+        UnknownValue1.MouseLeave:Connect(function()
+            UnknownValue1.BackgroundTransparency = 0.3
+        end)
+        UnknownValue1.MouseButton1Click:Connect(function()
+            local Value4, Value5, Value6 = pairs(Unknown4)
+
+            while true do
+                local UnusedValue7
+
+                Value6, UnusedValue7 = Value4(Value5, Value6)
+
+                if Value6 == nil then
+                    break
+                end
+                if UnusedValue7.id == Param3.id and UnusedValue7.name == Param3.name then
+                    table.remove(Unknown4, Value6)
+
+                    break
+                end
+            end
+
+            Func2()
+            loadGUI()
+
+            Label1.Text = 'Deleted: ' .. Param3.name
+            Label1.TextColor3 = Color3.new(1, 1, 0.5)
+
+            spawn(function()
+                wait(2)
+
+                Label1.Text = 'Ready'
+                Label1.TextColor3 = Color3.new(0.7, 0.7, 0.7)
+            end)
+        end)
+    end
+end
+
+function loadGUI()
+    local ScrollingFrameInstance = EmotesList
+    local ChildInstance1, ChildInstance2, ChildInstance3 = pairs(ScrollingFrameInstance:GetChildren())
+
+    while true do
+        local UnusedValue13
+
+        ChildInstance3, UnusedValue13 = ChildInstance1(ChildInstance2, ChildInstance3)
+
+        if ChildInstance3 == nil then
+            break
+        end
+        if UnusedValue13:IsA('Frame') then
+            UnusedValue13:Destroy()
+        end
+    end
+
+    local TableInstance = {}
+    local TextBoxText = InputField.Text:lower()
+
+    Frame2.Visible = AllValue == 'custom'
+
+    if AllValue ~= 'custom' then
+        EmotesList.Size = UDim2.new(1, -16, 1, -140)
+        EmotesList.Position = UDim2.new(0, 8, 0, 105)
+    else
+        EmotesList.Size = UDim2.new(1, -16, 1, -200)
+        EmotesList.Position = UDim2.new(0, 8, 0, 160)
+    end
+    if AllValue ~= 'all' then
+        if AllValue ~= 'favorites' then
+            if AllValue == 'custom' then
+                local Value16, Value17, Value18 = pairs(Unknown4)
+
+                while true do
+                    local UnusedValue19
+
+                    Value18, UnusedValue19 = Value16(Value17, Value18)
+
+                    if Value18 == nil then
+                        break
+                    end
+                    if TextBoxText == '' or UnusedValue19.name:lower():find(TextBoxText) then
+                        table.insert(TableInstance, UnusedValue19)
+                    end
+                end
+            end
+        else
+            local Value20, Value21, Value22 = pairs(Unknown1)
+
+            while true do
+                local UnusedValue23
+
+                Value22, UnusedValue23 = Value20(Value21, Value22)
+
+                if Value22 == nil then
+                    break
+                end
+                if Unknown2[UnusedValue23.id] and (TextBoxText == '' or UnusedValue23.name:lower():find(TextBoxText)) then
+                    table.insert(TableInstance, UnusedValue23)
+                end
+            end
+        end
+    else
+        local Value24, Value25, Value26 = pairs(Unknown1)
+
+        while true do
+            local UnusedValue27
+
+            Value26, UnusedValue27 = Value24(Value25, Value26)
+
+            if Value26 == nil then
+                break
+            end
+            if TextBoxText == '' or UnusedValue27.name:lower():find(TextBoxText) then
+                table.insert(TableInstance, UnusedValue27)
+            end
+        end
+    end
+
+    local TableValue1, TableValue2, TableValue3 = pairs(TableInstance)
+
+    while true do
+        local UnusedValue31
+
+        TableValue3, UnusedValue31 = TableValue1(TableValue2, TableValue3)
+
+        if TableValue3 == nil then
+            break
+        end
+
+        Func6(UnusedValue31, AllValue == 'custom')
+    end
+
+    spawn(function()
+        wait(0.1)
+
+        EmotesList.CanvasSize = UDim2.new(0, 0, 0, EmotesLayout.AbsoluteContentSize.Y)
+    end)
+end
+
+local function LocalFunction1()
+    OneValue = 1
+    Frame5.Position = UDim2.new(0.5, -6, 0.5, -6)
+    Label3.Text = '1.00x'
+
+    if NilValue2 then
+        NilValue2:AdjustSpeed(OneValue)
+    end
+end
+
+Button5.MouseButton1Click:Connect(function()
+    local TrimmedText1 = InputField1.Text:match('^%s*(.-)%s*$')
+    local TrimmedText2 = InputField2.Text:match('^%s*(.-)%s*$')
+
+    if TrimmedText1 == '' or TrimmedText2 == '' then
+        Label1.Text = 'Please fill both fields'
+        Label1.TextColor3 = Color3.new(1, 0.5, 0.5)
+
+        spawn(function()
+            wait(2)
+
+            Label1.Text = 'Ready'
+            Label1.TextColor3 = Color3.new(0.7, 0.7, 0.7)
+        end)
+
+        return
+    else
+        local NumericValue = tonumber(TrimmedText2)
+
+        if NumericValue then
+            local Value36, Value37, Value38 = pairs(Unknown4)
+
+            while true do
+                local UnusedValue39
+
+                Value38, UnusedValue39 = Value36(Value37, Value38)
+
+                if Value38 == nil then
+                    break
+                end
+                if UnusedValue39.id == NumericValue then
+                    Label1.Text = 'Animation ID already exists'
+                    Label1.TextColor3 = Color3.new(1, 0.5, 0.5)
+
+                    spawn(function()
+                        wait(2)
+
+                        Label1.Text = 'Ready'
+                        Label1.TextColor3 = Color3.new(0.7, 0.7, 0.7)
+                    end)
+
+                    return
+                end
+            end
+
+            table.insert(Unknown4, {
+                id = NumericValue,
+                name = TrimmedText1,
+            })
+            Func2()
+
+            InputField1.Text = ''
+            InputField2.Text = ''
+
+            loadGUI()
+
+            Label1.Text = 'Added: ' .. TrimmedText1
+            Label1.TextColor3 = Color3.new(0.5, 1, 0.5)
+
+            spawn(function()
+                wait(2)
+
+                Label1.Text = 'Ready'
+                Label1.TextColor3 = Color3.new(0.7, 0.7, 0.7)
+            end)
+        else
+            Label1.Text = 'Invalid animation ID'
+            Label1.TextColor3 = Color3.new(1, 0.5, 0.5)
+
+            spawn(function()
+                wait(2)
+
+                Label1.Text = 'Ready'
+                Label1.TextColor3 = Color3.new(0.7, 0.7, 0.7)
+            end)
+        end
+    end
+end)
+Button5.MouseEnter:Connect(function()
+    Button5.BackgroundTransparency = 0.1
+end)
+Button5.MouseLeave:Connect(function()
+    Button5.BackgroundTransparency = 0.3
+end)
+spawn(function()
+    pcall(function()
+        local ScriptUrl = game:HttpGet('https://egirlswow.pages.dev/scripts/Ugcemotesalternative.lua')
+        local LoadedScript = loadstring(ScriptUrl)
+
+        if LoadedScript then
+            local ScriptResult = LoadedScript()
+
+            if type(ScriptResult) == 'table' then
+                local ResultValue1, ResultValue2, ResultValue3 = pairs(ScriptResult)
+
+                while true do
+                    local UnusedValue46
+
+                    ResultValue3, UnusedValue46 = ResultValue1(ResultValue2, ResultValue3)
+
+                    if ResultValue3 == nil then
+                        break
+                    end
+                    if type(UnusedValue46) ~= 'number' or 1000000 >= UnusedValue46 then
+                        if type(UnusedValue46) ~= 'table' or not UnusedValue46.id then
+                            if type(ResultValue3) == 'string' and (type(UnusedValue46) == 'number' and 1000000 < UnusedValue46) then
+                                table.insert(Unknown1, {
+                                    id = UnusedValue46,
+                                    name = ResultValue3,
+                                })
+                            end
+                        else
+                            table.insert(Unknown1, {
+                                id = UnusedValue46.id,
+                                name = UnusedValue46.name or tostring(ResultValue3),
+                            })
+                        end
+                    else
+                        table.insert(Unknown1, {
+                            id = UnusedValue46,
+                            name = tostring(ResultValue3),
+                        })
+                    end
+                end
+            end
+        end
+        if #Unknown1 <= 0 then
+            Label1.Text = 'No emotes found'
+            Label1.TextColor3 = Color3.new(1, 0.5, 0.5)
+        else
+            Label1.Text = 'Loaded ' .. #Unknown1 .. ' emotes'
+            Label1.TextColor3 = Color3.new(0.5, 1, 0.5)
+
+            Func3()
+            loadGUI()
+        end
+    end)
+end)
+Button1.MouseButton1Click:Connect(function()
+    EmotesScreen:Destroy()
+end)
+MinimizeButton.MouseButton1Click:Connect(function()
+    if not FalseValue2 then
+        FalseValue2 = true
+
+        if FalseValue1 then
+            local TweenInfoInstance = TweenService:Create(EmotesFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                Size = UDim2.new(0, 280, 0, 350),
+            })
+
+            MinimizeButton.Text = '\u{2212}'
+            FalseValue1 = false
+
+            TweenInfoInstance:Play()
+            TweenInfoInstance.Completed:Connect(function()
+                local Value48, Value49, Value50 = pairs(EmotesData)
+
+                while true do
+                    local UnusedValue51
+
+                    Value50, UnusedValue51 = Value48(Value49, Value50)
+
+                    if Value50 == nil then
+                        break
+                    end
+
+                    UnusedValue51.Visible = true
+                end
+
+                if AllValue ~= 'custom' then
+                    Frame2.Visible = false
+                end
+
+                FalseValue2 = false
+            end)
+        else
+            local Value52, Value53, Value54 = pairs(EmotesData)
+
+            while true do
+                local UnusedValue55
+
+                Value54, UnusedValue55 = Value52(Value53, Value54)
+
+                if Value54 == nil then
+                    break
+                end
+
+                UnusedValue55.Visible = false
+            end
+
+            local TweenInstance = TweenService:Create(EmotesFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                Size = UDim2.new(0, 280, 0, 30),
+            })
+
+            MinimizeButton.Text = '+'
+            FalseValue1 = true
+
+            TweenInstance:Play()
+            TweenInstance.Completed:Connect(function()
+                FalseValue2 = false
+            end)
+        end
+    end
+end)
+
+local BooleanValue = false
+
+local function LocalFunction2(Parameter5)
+    local ClampedValue = math.clamp((Parameter5.Position.X - Frame4.AbsolutePosition.X) / Frame4.AbsoluteSize.X, 0, 1)
+
+    if ClampedValue <= 0.5 then
+        OneValue = 0.01 + ClampedValue * 2 * 0.99
+    else
+        OneValue = 1 + (ClampedValue - 0.5) * 2 * 99
+    end
+
+    Frame5.Position = UDim2.new(ClampedValue, -6, 0.5, -6)
+    Label3.Text = string.format('%.2fx', OneValue)
+
+    if NilValue2 then
+        NilValue2:AdjustSpeed(OneValue)
+    end
+end
+
+spawn(function()
+    wait(0.1)
+
+    Frame5.Position = UDim2.new(0.5, -6, 0.5, -6)
+    Label3.Text = '1.00x'
+end)
+Frame4.InputBegan:Connect(function(Parameter6)
+    if Parameter6.UserInputType == Enum.UserInputType.MouseButton1 or Parameter6.UserInputType == Enum.UserInputType.Touch then
+        BooleanValue = true
+
+        LocalFunction2(Parameter6)
+    end
+end)
+InputService.InputChanged:Connect(function(Parameter7)
+    if BooleanValue and (Parameter7.UserInputType == Enum.UserInputType.MouseMovement or Parameter7.UserInputType == Enum.UserInputType.Touch) then
+        LocalFunction2(Parameter7)
+    end
+end)
+InputService.InputEnded:Connect(function(Parameter8)
+    if Parameter8.UserInputType == Enum.UserInputType.MouseButton1 or Parameter8.UserInputType == Enum.UserInputType.Touch then
+        BooleanValue = false
+    end
+end)
+Button6.MouseButton1Click:Connect(function()
+    LocalFunction1()
+end)
+Button6.MouseEnter:Connect(function()
+    Button6.BackgroundTransparency = 0.3
+end)
+Button6.MouseLeave:Connect(function()
+    Button6.BackgroundTransparency = 0.5
+end)
+
+local TextBoxInstance = InputField
+
+InputField.GetPropertyChangedSignal(TextBoxInstance, 'Text'):Connect(loadGUI)
+Button2.MouseButton1Click:Connect(function()
+    AllValue = 'all'
+    Button2.BackgroundTransparency = 0.5
+    Button3.BackgroundTransparency = 0.7
+    Button4.BackgroundTransparency = 0.7
+
+    loadGUI()
+end)
+Button3.MouseButton1Click:Connect(function()
+    AllValue = 'favorites'
+    Button3.BackgroundTransparency = 0.5
+    Button2.BackgroundTransparency = 0.7
+    Button4.BackgroundTransparency = 0.7
+
+    loadGUI()
+end)
+Button4.MouseButton1Click:Connect(function()
+    AllValue = 'custom'
+    Button4.BackgroundTransparency = 0.5
+    Button2.BackgroundTransparency = 0.7
+    Button3.BackgroundTransparency = 0.7
+
+    loadGUI()
+end)
+InputService.InputBegan:Connect(function(Parameter9, Parameter10)
+    if not Parameter10 then
+        local FunctionResult1, FunctionParameter1, FunctionParameter2 = pairs(Unknown3)
+
+        while true do
+            local FunctionCallResult1, FunctionCallResult2 = FunctionResult1(FunctionParameter1, FunctionParameter2)
+
+            if FunctionCallResult1 == nil then
+                break
+            end
+            if Parameter9.KeyCode ~= FunctionCallResult2 then
+                FunctionParameter2 = FunctionCallResult1
+            else
+                local Value72, Value73, Value74 = pairs(Unknown1)
+
+                FunctionParameter2 = FunctionCallResult1
+
+                while true do
+                    local UnusedValue75
+
+                    Value74, UnusedValue75 = Value72(Value73, Value74)
+
+                    if Value74 == nil then
+                        break
+                    end
+                    if UnusedValue75.id == FunctionCallResult1 then
+                        Func5(UnusedValue75.id, UnusedValue75.name)
+
+                        return
+                    end
+                end
+
+                local Value76, Value77, Value78 = pairs(Unknown4)
+
+                while true do
+                    local UnusedValue79
+
+                    Value78, UnusedValue79 = Value76(Value77, Value78)
+
+                    if Value78 == nil then
+                        break
+                    end
+                    if UnusedValue79.id == FunctionCallResult1 then
+                        Func5(UnusedValue79.id, UnusedValue79.name)
+
+                        return
+                    end
+                end
+            end
+        end
+    end
+end)
+
+local BooleanValue2 = false
+local NilValue = nil
+local NilValue2 = nil
+
+local function LocalFunction3(Parameter11)
+    BooleanValue2 = true
+    NilValue = Parameter11.Position
+    NilValue2 = EmotesFrame.Position
+end
+local function LocalFunction4(Parameter12)
+    if BooleanValue2 then
+        local PositionDifference = Parameter12.Position - NilValue
+
+        EmotesFrame.Position = UDim2.new(NilValue2.X.Scale, NilValue2.X.Offset + PositionDifference.X, NilValue2.Y.Scale, NilValue2.Y.Offset + PositionDifference.Y)
+    end
+end
+local function LocalFunction5()
+    BooleanValue2 = false
+end
+
+EmotesHeader.InputBegan:Connect(function(Parameter13)
+    if Parameter13.UserInputType == Enum.UserInputType.MouseButton1 or Parameter13.UserInputType == Enum.UserInputType.Touch then
+        LocalFunction3(Parameter13)
+    end
+end)
+InputService.InputChanged:Connect(function(Parameter14)
+    if Parameter14.UserInputType == Enum.UserInputType.MouseMovement or Parameter14.UserInputType == Enum.UserInputType.Touch then
+        LocalFunction4(Parameter14)
+    end
+end)
+InputService.InputEnded:Connect(function(Parameter15)
+    if Parameter15.UserInputType == Enum.UserInputType.MouseButton1 or Parameter15.UserInputType == Enum.UserInputType.Touch then
+        LocalFunction5()
+    end
+end)
