@@ -1,0 +1,8 @@
+workspace.FallenPartsDestroyHeight = 0/0;
+workspace.Camera.CameraType = Enum.CameraType.Fixed;
+local HRoot = game:GetService("Players").LocalPlayer.Character.Humanoid.RootPart;
+local Pos = HRoot.CFrame;
+HRoot.CFrame = Pos + Vector3.new(0, -1e3, 0);
+task.wait(.1) -- try messing with this value
+HRoot.CFrame = Pos;
+workspace.Camera.CameraType = Enum.CameraType.Custom;
