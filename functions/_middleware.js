@@ -258,7 +258,7 @@ function getExplorerPage() {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>25ms Explorer</title>
+    <title>Explorer</title>
     <link rel="icon" type="image/png" href="/icon.png">
     <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.37.1/min/vs/loader.js"></script>
     
@@ -465,7 +465,7 @@ function getExplorerPage() {
 </head>
 <body>
     <div class="content-wrapper">
-        <h1>Explorer › Made by 25ms</h1>
+        <h1>Explorer › Website Made by 25ms & bat</h1>
         <div id="breadcrumb" class="breadcrumb"></div>
         <div id="table-container">
             <table id="file-table">
@@ -491,7 +491,7 @@ function getExplorerPage() {
     <script>
         const GITHUB_REPO = 'XVCHub/wow';
         const GITHUB_BRANCH = 'main';
-        const HIDDEN_FOLDERS = ['functions'];
+        const HIDDEN_FOLDERS = ['functions','docs','images','package.json','icon.png'];
         
         let viewing = false;
         let currentfilepath = "";
