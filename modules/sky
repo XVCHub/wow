@@ -1,0 +1,72 @@
+return {
+	["Emerald Nocturne"] = {
+		CelestialBodiesShown = true,
+		MoonAngularSize = 11,
+		MoonTextureId = "rbxasset://sky/moon.jpg",
+		SkyboxBk = "rbxassetid://16563478983",
+		SkyboxDn = "rbxassetid://16563481302",
+		SkyboxFt = "rbxassetid://16563484084",
+		SkyboxLf = "rbxassetid://16563485362",
+		SkyboxRt = "rbxassetid://16563487078",
+		SkyboxUp = "rbxassetid://16563489821",
+		StarCount = 3000,
+		SunAngularSize = 21,
+		SunTextureId = "rbxasset://sky/sun.jpg"
+	},
+	["Astra Veil"] = {
+		CelestialBodiesShown = true,
+		MoonAngularSize = 11,
+		MoonTextureId = "rbxasset://sky/moon.jpg",
+		SkyboxBk = "rbxassetid://16553658937",
+		SkyboxDn = "rbxassetid://16553660713",
+		SkyboxFt = "rbxassetid://16553662144",
+		SkyboxLf = "rbxassetid://16553664042",
+		SkyboxRt = "rbxassetid://16553665766",
+		SkyboxUp = "rbxassetid://16553667750",
+		StarCount = 3000,
+		SunAngularSize = 21,
+		SunTextureId = "rbxasset://sky/sun.jpg"
+	},
+	["Red Sky"] = {
+		CelestialBodiesShown = true,
+		MoonAngularSize = 11,
+		MoonTextureId = "rbxasset://sky/moon.jpg",
+		SkyboxBk = "rbxassetid://108929045660200",
+		SkyboxDn = "rbxassetid://78646480540009",
+		SkyboxFt = "rbxassetid://90546017435179",
+		SkyboxLf = "rbxassetid://109838453114563",
+		SkyboxRt = "rbxassetid://94190734796082",
+		SkyboxUp = "rbxassetid://126944775797063",
+		StarCount = 3000,
+		SunAngularSize = 21,
+		SunTextureId = "rbxasset://sky/sun.jpg"
+	},
+	["Sunset"] = {
+		CelestialBodiesShown = true,
+		MoonAngularSize = 11,
+		MoonTextureId = "rbxasset://sky/moon.jpg",
+		SkyboxBk = "rbxassetid://600830446",
+		SkyboxDn = "rbxassetid://600831635",
+		SkyboxFt = "rbxassetid://600832720",
+		SkyboxLf = "rbxassetid://600886090",
+		SkyboxRt = "rbxassetid://600833862",
+		SkyboxUp = "rbxassetid://600835177",
+		StarCount = 3000,
+		SunAngularSize = 21,
+		SunTextureId = "rbxasset://sky/sun.jpg"
+	},
+	["Galaxy Nebula"] = {
+		CelestialBodiesShown = true,
+		MoonAngularSize = 11,
+		MoonTextureId = "rbxasset://sky/moon.jpg",
+		SkyboxBk = "rbxassetid://15983968922",
+		SkyboxDn = "rbxassetid://15983966825",
+		SkyboxFt = "rbxassetid://15983965025",
+		SkyboxLf = "rbxassetid://15983967420",
+		SkyboxRt = "rbxassetid://15983966246",
+		SkyboxUp = "rbxassetid://15983964246",
+		StarCount = 3000,
+		SunAngularSize = 21,
+		SunTextureId = "rbxasset://sky/sun.jpg"
+	}
+}
