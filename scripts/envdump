@@ -1,0 +1,44 @@
+for k, v in _G do
+    t = typeof(v)
+    if t ~= "function" and t ~= "table" then
+        print(t == "string" and `_G.{k} = "{v}"` or `_G.{k} = {v}`)
+    end
+end
+
+for k, v in getgenv() do
+    t = typeof(v)
+    if t ~= "function" and t ~= "table" then
+        print(t == "string" and `getgenv().{k} = "{v}"` or `getgenv().{k} = {v}`)
+    end
+end
+
+--
+IGNORE_FE = {t=1}
+for k, v in getfenv() do
+    if not IGNORE_FE[k] then
+        t = typeof(v)
+        if t ~= "function" and t ~= "table" then
+            print(t == "string" and `getfenv().{k} = "{v}"` or `getfenv().{k} = {v}`)
+        end
+    end
+end
+
+--
+IGNORE_RE = {Enum=1,enum=1,game=1,workspace=1,Game=1,_VERSION=1,Workspace=1}
+for k, v in getrenv() do
+    if not IGNORE_RE[k] then
+        t = typeof(v)
+        if t ~= "function" and t ~= "table" then
+            print(t == "string" and `getrenv().{k} = "{v}"` or `getrenv().{k} = {v}`)
+        end
+    end
+end
+
+if shared then
+    for k, v in shared do
+        t = typeof(v)
+        if t ~= "function" and t ~= "table" then
+            print(t == "string" and `shared.{k} = "{v}"` or `shared.{k} = {v}`)
+        end
+    end
+end
