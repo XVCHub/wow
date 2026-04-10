@@ -96,12 +96,12 @@ function draggable(p5)
         end
     end)
 end
-function tween(p18, p19, p20, p21, p22)
-    local v23 = game:GetService('TweenService'):Create(p18, TweenInfo.new(p21, Enum.EasingStyle[p19], Enum.EasingDirection[p20]), p22)
 
-    v23:Play()
-
-    return v23
+function tween(object, goal, callback, tweenin)
+    local t = game:GetService("TweenService"):Create(object, tweenin or TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), goal)
+    t.Completed:Connect(callback or function() end)
+    t:Play()
+    return t
 end
 
 draggable(screengui.Topbar)
