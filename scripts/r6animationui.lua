@@ -888,9 +888,7 @@ dropdown = mainframe.ScrollingFrame.DropdownFrame
 elements = dropdown.HoldContentsFrame.Frame.Elements
 dropdownenabled = true
 
-tween(dropdown.HoldContentsFrame.Frame, 'Linear', 'In', 0, {
-    Position = UDim2.new(0, 0, -1, 0),
-})
+tween(dropdown.HoldContentsFrame.Frame, {Position = UDim2.new(0, 0, -1, 0)}, nil, TweenInfo.new(0, Enum.EasingStyle.Linear, Enum.EasingDirection.In))
 
 dropdown.HoldContentsFrame.Frame.Visible = false
 dropdowndeactivate = screengui.DropdownDeactivate
