@@ -97,7 +97,12 @@ function draggable(p5)
     end)
 end
 
-function tween(object, goal, callback, tweenin)
+function tween(object, goal, callback, tweenin, props)
+    if typeof(goal) == "string" then
+        local t = game:GetService("TweenService"):Create(object, TweenInfo.new(tweenin, Enum.EasingStyle[goal], Enum.EasingDirection[callback]), props)
+        t:Play()
+        return t
+    end
     local t = game:GetService("TweenService"):Create(object, tweenin or TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), goal)
     t.Completed:Connect(callback or function() end)
     t:Play()
