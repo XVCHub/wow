@@ -1,0 +1,1405 @@
+VERSION = 'Ox01BABA'
+
+local orionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/Guerric9018/OrionLibFixed/main/OrionLib.lua'))()
+
+_G.CHATBOTHUB_BLACKLISTED = {}
+_G.CHATBOTHUB_DISPLAYTOFULLNAME = {}
+_G.CHATBOTHUB_BLACKLISTEDCONTENT = {}
+
+local playersService = game:GetService('Players')
+local httpService = game:GetService('HttpService')
+local localPlayer = playersService.LocalPlayer
+local screenGui = Instance.new('ScreenGui')
+
+screenGui.Parent = game.CoreGui
+screenGui.IgnoreGuiInset = true
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+local hasAlreadyRun
+
+if _G.CHATBOTHUB_RAN ~= nil then
+    hasAlreadyRun = true
+else
+    _G.CHATBOTHUB_TTA = false
+    _G.CHATBOTHUB_AI_MODEL = 'Llama-8B ( default | 5 points )'
+    _G.CHATBOTHUB_ON = false
+    _G.CHATBOTHUB_CREDITS = math.huge
+    _G.CHATBOTHUB_CUSTOMPROMPT = false
+    _G.CHATBOTHUB_CUSTOMPROMPTTEXT = 'Just be a normal AI.'
+    _G.CHATBOTHUB_WHITELIST = false
+    _G.CHATBOTHUB_BOTFORMAT = false
+    _G.CHATBOTHUB_TTA_RUNNING = true
+    _G.CHATBOTHUB_CHAT_BYPASS = false
+    _G.CHATBOTHUB_KEY = 'default'
+    _G.CHATBOTHUB_LOADED = false
+    _G.CHATBOTHUB_DELAYED_CHAT = false
+    _G.CHATBOTHUB_REMINDING_STATE = false
+    _G.CHATBOTHUB_MaxDistance = 20
+    _G.CHATBOTHUB_Character = 'Normal (Roblox aware)'
+    _G.CHATBOTHUB_BUFFER = false
+    _G.CHATBOTHUB_LANGUAGE = 'en'
+    _G.CHATBOTHUB_AUTOMOVING = false
+    _G.CHATBOTHUB_AUTOMOVINGMAXDISTANCE = 30
+    _G.CHATBOTHUB_MAX_MESSAGE_LENGTH = 190
+    _G.CHATBOTHUB_CUSTOMAIS = {}
+    hasAlreadyRun = false
+end
+
+CHATBOTHUB_LOGIN = true
+CHATBOTHUB_PREMIUM = true
+
+local initCounter = 0
+local eventListeners = {}
+
+_G.CHATBOTHUB_RAN = true
+
+local isTextChatAvailable, textChatResult = pcall(function()
+    return game:GetService('TextChatService').TextChannels
+end)
+local chatSystemVersion = 0
+local sendChatMessage
+
+if isTextChatAvailable then
+    print('New chat system detected')
+
+    chatSystemVersion = 1
+    sendChatMessage = function(message)
+        game:GetService('TextChatService').TextChannels.RBXGeneral:SendAsync(message)
+    end
+else
+    print('Old chat system detected')
+
+    sendChatMessage = function(player)
+        game:GetService('ReplicatedStorage').DefaultChatSystemChatEvents.SayMessageRequest:FireServer(player, 'All')
+    end
+end
+
+function getKeys(data)
+    local key, value, entry = pairs(data)
+    local tempTable = {}
+
+    while true do
+        local playerName
+
+        entry, playerName = key(value, entry)
+
+        if entry == nil then
+            break
+        end
+
+        table.insert(tempTable, entry)
+    end
+
+    return tempTable
+end
+function writeFileAvailable()
+    if writefile then
+        return true
+    end
+end
+
+local aiModelCosts = {
+    ['Llama-8B ( default | 5 points )'] = 5,
+    ['Llama2-7B ( if default one fails | 5 points )'] = 5,
+    ['Llama-70B ( 50 points )'] = 50,
+}
+
+local function initializeGui() end
+local function updateSettings() end
+local function processPlayerMessage(messageContent)
+    local plr, childPlayer, targetPlayer = pairs(game.Players:GetChildren())
+
+    while true do
+        local displayName
+
+        targetPlayer, displayName = plr(childPlayer, targetPlayer)
+
+        if targetPlayer == nil then
+            break
+        end
+
+        local messageLength = #messageContent
+
+        if displayName.Name:sub(1, messageLength) == messageContent then
+            return displayName.Name, displayName.DisplayName
+        end
+    end
+
+    local p, playerInstance, currentPlayer = pairs(game.Players:GetChildren())
+
+    while true do
+        local char
+
+        currentPlayer, char = p(playerInstance, currentPlayer)
+
+        if currentPlayer == nil then
+            break
+        end
+
+        local contentLength = #messageContent
+
+        if char.DisplayName:sub(1, contentLength) == messageContent then
+            return char.Name, char.DisplayName
+        end
+    end
+
+    return nil, nil
+end
+local function handlePlayerChat(chatMessage)
+    local playerObj, plrInstance, playerEntry = pairs(game.Players:GetChildren())
+
+    while true do
+        local username
+
+        playerEntry, username = playerObj(plrInstance, playerEntry)
+
+        if playerEntry == nil then
+            break
+        end
+
+        local prefixLength = #chatMessage
+        local usernamePrefix = username.Name:sub(1, prefixLength)
+
+        if string.lower(usernamePrefix) == chatMessage then
+            return username
+        end
+    end
+
+    local playerChar, characterModel, charInstance = pairs(game.Players:GetChildren())
+
+    while true do
+        local fullDisplayName
+
+        charInstance, fullDisplayName = playerChar(characterModel, charInstance)
+
+        if charInstance == nil then
+            break
+        end
+
+        local displayNameLength = #chatMessage
+        local displayNamePrefix = fullDisplayName.DisplayName:sub(1, displayNameLength)
+
+        if string.lower(displayNamePrefix) == chatMessage then
+            return fullDisplayName
+        end
+    end
+
+    return nil, nil
+end
+local function validateAndSend()
+    print(stopping)
+
+    _G.CHATBOTHUB_TTA_RUNNING = false
+
+    wait(1)
+
+    _G.CHATBOTHUB_TTA_RUNNING = true
+end
+local function orionLib2()
+    localPlayer.Character:FindFirstChildWhichIsA('Humanoid'):ChangeState(Enum.HumanoidStateType.Jumping)
+end
+local function blacklistedPlayers()
+    if localPlayer.Character and localPlayer.Character:FindFirstChild('HumanoidRootPart') then
+        local playerRootPart = localPlayer.Character.HumanoidRootPart
+
+        while _G.CHATBOTHUB_TTA_RUNNING do
+            playerRootPart.CFrame = playerRootPart.CFrame * CFrame.Angles(0, math.rad(15), 0)
+
+            wait(0.1)
+        end
+    end
+end
+local function displayNameToFullName(player2)
+    local playerName2 = handlePlayerChat(player2)
+
+    print('following ' .. playerName2.DisplayName)
+
+    _G.CHATBOTHUB_TARGET_PLAYER = playerName2
+
+    while _G.CHATBOTHUB_TTA_RUNNING and playerName2 == _G.CHATBOTHUB_TARGET_PLAYER do
+        localPlayer.Character:FindFirstChildOfClass('Humanoid'):MoveTo(playerName2.Character.HumanoidRootPart.Position)
+        wait(0.05)
+    end
+end
+local function blacklistedContent(inputText)
+    local lowerInput = string.lower(inputText)
+
+    if lowerInput == 'stop' then
+        validateAndSend()
+
+        return
+    elseif lowerInput == 'jump' then
+        orionLib2()
+
+        return
+    elseif lowerInput == 'spin' then
+        blacklistedPlayers()
+
+        return
+    elseif lowerInput ~= 'null' then
+        local targetPlayerName = string.match(lowerInput, '^follow%s+(.+)')
+
+        if targetPlayerName then
+            displayNameToFullName(targetPlayerName)
+        end
+    end
+end
+local function httpService2(userId)
+    _G.CHATBOTHUB_KEY = userId
+    _G.CHATBOTHUB_CREDITS = math.huge
+    initializeGui()
+    updateSettings()
+    orionLib:MakeNotification({
+        Name = 'Logged in',
+        Content = 'Welcome!',
+        Image = 'rbxassetid://7115671043',
+        Time = 3,
+    })
+    CHATBOTHUB_LOGIN = true
+    return true
+end
+local function customAis(aiDataString)
+    local aiEntry, aiName, aiPrompt = string.gmatch(aiDataString, '([^,]+)')
+
+    while true do
+        aiPrompt = aiEntry(aiName, aiPrompt)
+
+        if aiPrompt == nil then
+            break
+        end
+
+        local aiModelName, aiPromptValue = string.match(aiPrompt, '([^:]+):([^:]+)')
+
+        if aiModelName and aiPromptValue then
+            _G.CHATBOTHUB_CUSTOMAIS[aiModelName] = aiPromptValue
+        end
+    end
+end
+
+function encodeAIs()
+    local aiKey, aiTable, aiConfig = pairs(_G.CHATBOTHUB_CUSTOMAIS)
+    local savedAis = {}
+
+    while true do
+        local fileReadSuccess
+
+        aiConfig, fileReadSuccess = aiKey(aiTable, aiConfig)
+
+        if aiConfig == nil then
+            break
+        end
+
+        table.insert(savedAis, aiConfig .. ':' .. fileReadSuccess)
+    end
+
+    return table.concat(savedAis, ',')
+end
+
+local function loadCustomAis()
+initializeGui()
+updateSettings()
+end
+local function saveCustomAis()
+    if writeFileAvailable() then
+        writefile('chatbothub_ais.cb', encodeAIs())
+    end
+end
+local function updateAiConfig(aiName2, aiPrompt2)
+    _G.CHATBOTHUB_CUSTOMAIS[aiName2] = aiPrompt2
+
+    saveCustomAis()
+end
+local function createAiEntry(aiModel)
+    if not _G.CHATBOTHUB_REMINDING_STATE and aiModel then
+        _G.CHATBOTHUB_REMINDING_STATE = true
+
+        while _G.CHATBOTHUB_REMINDING_STATE do
+            sendChatMessage('Hello, I am an AI! Please chat with me!')
+            wait(20)
+        end
+    end
+    if not aiModel then
+        _G.CHATBOTHUB_REMINDING_STATE = false
+    end
+end
+
+local aiData = {}
+
+local function createWindow(windowConfig)
+    table.insert(aiData, windowConfig)
+
+    if #aiData > 5 then
+        table.remove(aiData, 1)
+    end
+end
+local function createTab(tabConfig)
+    if not _G.CHATBOTHUB_DELAYED_CHAT and tabConfig then
+        _G.CHATBOTHUB_DELAYED_CHAT = true
+
+        while _G.CHATBOTHUB_DELAYED_CHAT do
+            if #aiData > 0 then
+                local aiModelName2 = aiData[1]
+
+                table.remove(aiData, 1)
+                sendChatMessage(aiModelName2)
+            end
+
+            wait(2)
+        end
+    end
+    if not tabConfig then
+        _G.CHATBOTHUB_DELAYED_CHAT = false
+    end
+end
+
+local mainWindow = orionLib:MakeWindow({
+    Name = 'ChatBot Hub',
+    HidePremium = false,
+    SaveConfig = false,
+    IntroText = 'ChatBot Hub',
+    IntroEnabled = true,
+    IntroIcon = 'rbxassetid://13188306657',
+})
+local mainTab = mainWindow:MakeTab({
+    Name = 'Main',
+    Icon = 'rbxassetid://6034798461',
+})
+local aiTab = mainWindow:MakeTab({
+    Name = 'AI',
+    Icon = 'rbxassetid://13680871118',
+})
+local premiumTab = mainWindow:MakeTab({
+    Name = 'Premium',
+    Icon = 'rbxassetid://11835491319',
+})
+local chatTab = mainWindow:MakeTab({
+    Name = 'Chat',
+    Icon = 'rbxassetid://14376097365',
+})
+local moreTab = mainWindow:MakeTab({
+    Name = 'More',
+    Icon = 'rbxassetid://5107175347',
+})
+local helpTab = mainWindow:MakeTab({
+    Name = 'Help',
+    Icon = 'rbxassetid://15668939723',
+})
+
+local function initializeGui2() end
+
+local isInitialized = true
+local u100 = mainTab:AddToggle({
+    Name = 'Running',
+    Default = _G.CHATBOTHUB_ON,
+    Callback = function(initConfig)
+        if not CHATBOTHUB_LOGIN and isInitialized then
+            orionLib:MakeNotification({
+                Name = 'Error',
+                Content = "You first need to login, go check the 'more' tab",
+                Image = 'rbxassetid://6723839910',
+                Time = 3,
+            })
+            initializeGui2()
+        end
+
+        _G.CHATBOTHUB_ON = initConfig
+    end,
+})
+
+initializeGui2 = function()
+    isInitialized = false
+
+    u100:Set(false)
+    wait(0.3)
+
+    isInitialized = true
+end
+_G.CHATBOTHUB_CREDITS = 999999
+local u101 = mainTab:AddLabel('Points balance: ' .. _G.CHATBOTHUB_CREDITS)
+local u102 = mainTab:AddLabel('😈')
+initializeGui = function()
+    u101:Set(_G.CHATBOTHUB_CREDITS)
+end
+
+local function u102() end
+local function u103() end
+
+local u105 = mainTab:AddTextbox({
+    Name = 'Blacklist player',
+    Default = '',
+    TextDisappear = true,
+    Callback = function(p104)
+        u102(p104)
+    end,
+})
+local u107 = mainTab:AddDropdown({
+    Name = 'Blacklisted players',
+    Description = 'Select player to whitelist...',
+    Default = '',
+    Options = _G.CHATBOTHUB_BLACKLISTED,
+    Callback = function(p106)
+        u103(p106)
+    end,
+})
+
+u102 = function(p108)
+    local v109, v110 = processPlayerMessage(p108)
+
+    if v109 ~= nil then
+        _G.CHATBOTHUB_BLACKLISTED[v109] = true
+        _G.CHATBOTHUB_DISPLAYTOFULLNAME[v109 .. ' (' .. v110 .. ')'] = v109
+
+        table.insert(_G.CHATBOTHUB_BLACKLISTEDCONTENT, v109 .. ' (' .. v110 .. ')')
+        u107:Refresh(_G.CHATBOTHUB_BLACKLISTEDCONTENT, true)
+    end
+end
+u103 = function(p111)
+    local v112 = _G.CHATBOTHUB_DISPLAYTOFULLNAME[p111]
+
+    if v112 ~= nil then
+        _G.CHATBOTHUB_BLACKLISTED[v112] = false
+
+        local v113, v114, v115 = ipairs(_G.CHATBOTHUB_BLACKLISTEDCONTENT)
+
+        while true do
+            local v116
+
+            v115, v116 = v113(v114, v115)
+
+            if v115 == nil then
+                break
+            end
+            if v116 == p111 then
+                table.remove(_G.CHATBOTHUB_BLACKLISTEDCONTENT, v115)
+            end
+        end
+
+        u107:Refresh(_G.CHATBOTHUB_BLACKLISTEDCONTENT, true)
+        u107:Set('')
+    end
+end
+
+mainTab:AddButton({
+    Name = 'Reset blacklist',
+    Callback = function()
+        table.clear(_G.CHATBOTHUB_BLACKLISTED)
+        table.clear(_G.CHATBOTHUB_DISPLAYTOFULLNAME)
+        table.clear(_G.CHATBOTHUB_BLACKLISTEDCONTENT)
+        u107:Refresh(_G.CHATBOTHUB_BLACKLISTEDCONTENT, true)
+    end,
+})
+mainTab:AddToggle({
+    Name = 'Whitelist mode',
+    Default = _G.CHATBOTHUB_WHITELIST,
+    Callback = function(p117)
+        if p117 == false then
+            u107:Title('Blacklisted players')
+            u105:Title('Blacklist player')
+
+            _G.CHATBOTHUB_WHITELIST = p117
+        else
+            u107:Title('Whitelisted players')
+            u105:Title('Whitelist player')
+
+            _G.CHATBOTHUB_WHITELIST = p117
+        end
+    end,
+})
+mainTab:AddTextbox({
+    Name = 'Listening range',
+    Default = '20',
+    TextDisappear = false,
+    Callback = function(p118)
+        _G.CHATBOTHUB_MaxDistance = tonumber(p118)
+    end,
+})
+mainTab:AddTextbox({
+    Name = 'Max message length',
+    Default = 190,
+    TextDisappear = false,
+    Callback = function(p119)
+        _G.CHATBOTHUB_MAX_MESSAGE_LENGTH = tonumber(p119)
+    end,
+})
+mainTab:AddToggle({
+    Name = 'Anti spam',
+    Default = _G.CHATBOTHUB_DELAYED_CHAT,
+    Callback = function(p120)
+        createTab(p120)
+    end,
+})
+mainTab:AddToggle({
+    Name = 'Buffer (adds a 3 seconds delay)',
+    Default = _G.CHATBOTHUB_BUFFER,
+    Callback = function(p121)
+        local v122 = playersService
+        local v123, v124, v125 = ipairs(v122:GetPlayers())
+
+        while true do
+            local v126
+
+            v125, v126 = v123(v124, v125)
+
+            if v125 == nil then
+                break
+            end
+
+            eventListeners[v126] = {
+                buffer = {},
+                timerStarted = false,
+            }
+        end
+
+        _G.CHATBOTHUB_BUFFER = p121
+    end,
+})
+
+local function u127() end
+
+mainTab:AddButton({
+    Name = 'Reset AI memory',
+    Callback = function()
+        u127()
+        orionLib:MakeNotification({
+            Name = 'Success',
+            Content = 'Memory was successfully reset!',
+            Image = 'rbxassetid://7115671043',
+            Time = 3,
+        })
+    end,
+})
+mainTab:AddToggle({
+    Name = 'Chatbot message formatting ([Chatbot] ...)',
+    Default = _G.CHATBOTHUB_BOTFORMAT,
+    Callback = function(p128)
+        _G.CHATBOTHUB_BOTFORMAT = p128
+    end,
+})
+mainTab:AddToggle({
+    Name = "Auto remind you're a chatbot",
+    Default = _G.CHATBOTHUB_REMINDING_STATE,
+    Callback = function(p129)
+        createAiEntry(p129)
+    end,
+})
+
+local function u130() end
+
+aiTab:AddDropdown({
+    Name = 'Select the character of your AI',
+    Default = _G.CHATBOTHUB_Character,
+    Description = 'List is subject to change in future updates! Give ideas in the Discord server!',
+    Options = {
+        'Normal (Roblox aware)',
+        'Normal',
+        'Furry',
+        'Roast',
+        'Waifu',
+        'Nerd',
+        'Christian',
+        'Robot',
+        'Brainrot',
+    },
+    Callback = function(p131)
+        _G.CHATBOTHUB_Character = p131
+
+        u130()
+    end,
+})
+aiTab:AddDropdown({
+    Name = 'Select the AI model',
+    Default = _G.CHATBOTHUB_AI_MODEL,
+    Description = 'Some AIs are smarter but cost more points!',
+    Options = {
+        'Llama-8B ( default | 5 points )',
+        'Llama2-7B ( if default one fails | 5 points )',
+        'Llama-70B ( 50 points )',
+    },
+    Callback = function(p132)
+        _G.CHATBOTHUB_AI_MODEL = p132
+    end,
+})
+aiTab:AddDropdown({
+    Name = 'Language',
+    Default = _G.CHATBOTHUB_LANGUAGE,
+    Description = 'New languages can be added if there is enough demand',
+    Options = {
+        'en',
+        'fr',
+        'ru',
+        'es',
+        'br',
+        'ar',
+    },
+    Callback = function(p133)
+        _G.CHATBOTHUB_LANGUAGE = p133
+    end,
+})
+
+local _PremiumisNOTactivated = premiumTab:AddLabel('Premium is NOT activated')
+
+updateSettings = function()
+    _PremiumisNOTactivated:Set(CHATBOTHUB_PREMIUM and 'Premium activated!' or 'Premium is NOT activated')
+end
+
+updateSettings()
+
+local u135 = true
+
+local function u136() end
+
+local u137 = true
+
+local function u138() end
+
+local u139 = true
+local u141 = premiumTab:AddToggle({
+    Name = 'Text to action mode ( 1.5x points )',
+    Default = _G.CHATBOTHUB_TTA,
+    Callback = function(p140)
+        if _G.CHATBOTHUB_LOADED then
+            if not CHATBOTHUB_PREMIUM and u137 then
+                orionLib:MakeNotification({
+                    Name = 'Error',
+                    Content = 'You need to have premium to use this feature!',
+                    Image = 'rbxassetid://6723839910',
+                    Time = 3,
+                })
+                u136()
+            end
+
+            _G.CHATBOTHUB_TTA = p140
+        end
+    end,
+})
+local u143 = premiumTab:AddToggle({
+    Name = 'Auto moving (under development)',
+    Default = _G.CHATBOTHUB_AUTOMOVING,
+    Callback = function(p142)
+        if _G.CHATBOTHUB_LOADED then
+            if not CHATBOTHUB_PREMIUM and u139 then
+                orionLib:MakeNotification({
+                    Name = 'Error',
+                    Content = 'You need to have premium to use this feature!',
+                    Image = 'rbxassetid://6723839910',
+                    Time = 3,
+                })
+                u138()
+            end
+
+            _G.CHATBOTHUB_AUTOMOVING = p142
+        end
+    end,
+})
+
+u136 = function()
+    u137 = false
+
+    u141:Set(false)
+    wait(0.3)
+
+    u137 = true
+end
+u136 = function()
+    u139 = false
+
+    u143:Set(false)
+    wait(0.3)
+
+    u139 = true
+end
+
+local u145 = premiumTab:AddToggle({
+    Name = 'Enable custom prompt',
+    Default = _G.CHATBOTHUB_CUSTOMPROMPT,
+    Callback = function(p144)
+        if _G.CHATBOTHUB_LOADED then
+            if not CHATBOTHUB_PREMIUM and u135 then
+                orionLib:MakeNotification({
+                    Name = 'Error',
+                    Content = 'You need to have premium to use this feature!',
+                    Image = 'rbxassetid://6723839910',
+                    Time = 3,
+                })
+                u130()
+            end
+
+            _G.CHATBOTHUB_CUSTOMPROMPT = p144
+        end
+    end,
+})
+
+u130 = function()
+    u135 = false
+
+    u145:Set(false)
+    wait(0.3)
+
+    u135 = true
+end
+
+local function u146() end
+
+premiumTab:AddTextbox({
+    Name = 'Enter custom prompt here: ',
+    Default = '',
+    TextDisappear = true,
+    Callback = function(p147)
+        if _G.CHATBOTHUB_LOADED then
+            if CHATBOTHUB_PREMIUM then
+                _G.CHATBOTHUB_CUSTOMPROMPTTEXT = p147
+
+                u146()
+            else
+                orionLib:MakeNotification({
+                    Name = 'Error',
+                    Content = 'You need to have premium to use this feature!',
+                    Image = 'rbxassetid://6723839910',
+                    Time = 3,
+                })
+            end
+        end
+    end,
+})
+
+local _CustomPrompt = premiumTab:AddParagraph('Custom Prompt', _G.CHATBOTHUB_CUSTOMPROMPTTEXT)
+
+u146 = function()
+    _CustomPrompt:Set(_G.CHATBOTHUB_CUSTOMPROMPTTEXT)
+end
+
+local function u149(player3) end
+
+chatTab:AddButton({
+    Name = 'Clear chat',
+    Callback = function()
+        u149('')
+    end,
+})
+
+local aiSelection = premiumTab:AddDropdown({
+    Name = 'Custom AIs',
+    Description = 'Your saved custom AIs',
+    Default = '',
+    Options = getKeys(_G.CHATBOTHUB_CUSTOMAIS),
+    Callback = function(message2)
+        _G.CHATBOTHUB_CUSTOMPROMPTTEXT = _G.CHATBOTHUB_CUSTOMAIS[message2]
+
+        u146()
+    end,
+})
+
+premiumTab:AddTextbox({
+    Name = 'Save custom prompt with name: ',
+    Default = '',
+    TextDisappear = true,
+    Callback = function(userInput)
+        if userInput ~= '' and _G.CHATBOTHUB_CUSTOMPROMPTTEXT ~= '' then
+            updateAiConfig(userInput:gsub(':', ' '):gsub(',', ' '), _G.CHATBOTHUB_CUSTOMPROMPTTEXT:gsub(':', ' '):gsub(',', ' '))
+            aiSelection:Refresh(getKeys(_G.CHATBOTHUB_CUSTOMAIS), true)
+        end
+    end,
+})
+
+local aiResponse = ''
+local aiResponseText = chatTab:AddParagraph("AI's answer", '')
+
+chatTab:AddButton({
+    Name = 'Copy the answer',
+    Description = 'Click to copy the full answer',
+    Callback = function()
+        orionLib:MakeNotification({
+            Name = 'ChatBot response',
+            Content = 'ChatBot response copied to clipboard',
+            Time = 3,
+            Image = 'rbxassetid://10337369764',
+        })
+        setclipboard(aiResponse)
+    end,
+})
+
+u149 = function(prompt)
+    aiResponse = prompt
+
+    aiResponseText:Set(prompt)
+end
+
+local function getPlayerDisplayName(player4)
+    return ''
+end
+local function formatAiResponse(player5) end
+
+chatTab:AddTextbox({
+    Name = 'Message',
+    Default = '',
+    TextDisappear = true,
+    Callback = function(userMessage)
+        local encodedUserMessage = httpService:UrlEncode(userMessage)
+        local encodedDisplayName = httpService:UrlEncode(getPlayerDisplayName(localPlayer))
+        local encodedCharacter = httpService:UrlEncode(localPlayer.DisplayName)
+        local encodedAiModel = httpService:UrlEncode(_G.CHATBOTHUB_Character)
+        local httpRequestUrl = httpService:UrlEncode(_G.CHATBOTHUB_AI_MODEL)
+        local fullHttpResponse
+
+        if CHATBOTHUB_PREMIUM and _G.CHATBOTHUB_CUSTOMPROMPT then
+            encodedAiModel = httpService:UrlEncode(_G.CHATBOTHUB_CUSTOMPROMPTTEXT)
+            fullHttpResponse = 'yes'
+        else
+            fullHttpResponse = 'no'
+        end
+
+        local chatApiUrl = game:HttpGet('https://guerric.pythonanywhere.com/chat?msg=' .. encodedUserMessage .. '&user=' .. encodedCharacter .. '&key=' .. _G.CHATBOTHUB_KEY .. '&history=' .. encodedDisplayName .. '&ai=' .. encodedAiModel .. '&uid=' .. localPlayer.UserId .. '&custom=' .. fullHttpResponse .. '&model=' .. httpRequestUrl .. '&lang=' .. _G.CHATBOTHUB_LANGUAGE .. '&long=yes&tta=no&version=' .. VERSION)
+
+        if responseText ~= '' then
+            formatAiResponse(localPlayer, userMessage, chatApiUrl)
+
+            _G.CHATBOTHUB_CREDITS = _G.CHATBOTHUB_CREDITS - aiModelCosts[_G.CHATBOTHUB_AI_MODEL]
+
+            orionLib:MakeNotification({
+                Name = tostring(aiModelCosts[_G.CHATBOTHUB_AI_MODEL]) .. ' points used',
+                Content = tostring(_G.CHATBOTHUB_CREDITS) .. ' points left',
+                Time = 1,
+            })
+            u101:Set(_G.CHATBOTHUB_CREDITS)
+            u149(chatApiUrl)
+        end
+    end,
+})
+moreTab:AddTextbox({
+    Name = 'Key',
+    Default = '',
+    TextDisappear = true,
+    Callback = function(chatMessage2)
+        if _G.CHATBOTHUB_LOADED then
+            httpService2(chatMessage2)
+        end
+    end,
+})
+moreTab:AddButton({
+    Name = 'Official Discord server',
+    Description = 'Click to copy the link',
+    Callback = function()
+        orionLib:MakeNotification({
+            Name = 'Discord',
+            Content = 'Discord link copied to clipboard',
+            Time = 3,
+            Image = 'rbxassetid://10337369764',
+        })
+        setclipboard('https://discord.gg/MJagjEv9VX')
+    end,
+})
+moreTab:AddButton({
+    Name = 'Chat bypass by Guerric',
+    Description = 'Click to execute the script',
+    Callback = function()
+        orionLib:MakeNotification({
+            Name = 'Chat bypass by Guerric',
+            Content = 'Chat bypass script launched',
+            Time = 3,
+            Image = 'rbxassetid://7115671043',
+        })
+        loadstring(game:HttpGet('https://raw.githubusercontent.com/Guerric9018/chat_bypass/main/main.lua'))()
+    end,
+})
+moreTab:AddButton({
+    Name = 'Anti chat logger',
+    Description = 'Click to execute the script',
+    Callback = function()
+        if string.sub(identifyexecutor(), 1, 6):lower() == 'celery' then
+            print('Celery detected, no anti-chat logger. Use with caution!')
+            orionLib:MakeNotification({
+                Name = 'Error',
+                Content = 'You are using Celery, which does not support the anti chat logger.',
+                Image = 'rbxassetid://16661795528',
+                Time = 3,
+            })
+        else
+            loadstring(game:HttpGet('https://raw.githubusercontent.com/AnthonyIsntHere/anthonysrepository/main/scripts/AntiChatLogger.lua', true))()
+            orionLib:MakeNotification({
+                Name = 'Success',
+                Content = 'Anti chat logger launched!',
+                Image = 'rbxassetid://7115671043',
+                Time = 3,
+            })
+        end
+    end,
+})
+moreTab:AddButton({
+    Name = 'Delete saved AIs',
+    Description = 'This will instantly delete all of your saved custom AIs',
+    Callback = function()
+        if writeFileAvailable() then
+            writefile('chatbothub_ais.cb', '')
+
+            _G.CHATBOTHUB_CUSTOMAIS = {}
+
+            aiSelection:Refresh(getKeys(_G.CHATBOTHUB_CUSTOMAIS), true)
+        end
+
+        orionLib:MakeNotification({
+            Name = 'Success',
+            Content = 'AIs were successfully deleted!',
+            Image = 'rbxassetid://7115671043',
+            Time = 3,
+        })
+    end,
+})
+helpTab:AddParagraph('Help', '<b>\nIf you encounter issues. Please check the following:</b>\n\n<font color="rgb(255, 0, 0)"><b>\u{2022} Have you logged in?</b></font> Have you put your key in the \'more\' tab? If not, go get your key on Discord then come back.\n<font color="rgb(255, 0, 0)"><b>\u{2022} Have you set \'Running\' on in the main tab?</b></font>\n<font color="rgb(255, 0, 0)"><b>\u{2022} Do you have enough points to generate responses?</b></font>\n\n<b>If nothing works please ask your question in the Discord server.</b>')
+orionLib:Init()
+
+local function sendChatMessage2(userInput2, botPrefix, maxMessageLength, chatDelay, bypassFilter)
+    if _G.CHATBOTHUB_AUTOMOVING then
+        initCounter = 20
+    end
+
+    local encodedInput = httpService:UrlEncode(userInput2)
+
+    userDisplayURI = httpService:UrlEncode(botPrefix:gsub('%d+', ''))
+
+    local encodedDisplayName2 = httpService:UrlEncode(chatDelay)
+    local encodedCharacter2 = httpService:UrlEncode(_G.CHATBOTHUB_Character)
+    local encodedAiModel2 = httpService:UrlEncode(_G.CHATBOTHUB_AI_MODEL)
+    local httpRequestUrl2
+
+    if CHATBOTHUB_PREMIUM and _G.CHATBOTHUB_CUSTOMPROMPT then
+        encodedCharacter2 = httpService:UrlEncode(_G.CHATBOTHUB_CUSTOMPROMPTTEXT)
+        httpRequestUrl2 = 'yes'
+    else
+        httpRequestUrl2 = 'no'
+    end
+
+    local rawApiResponse = game:HttpGet('https://guerric.pythonanywhere.com/chat?msg=' .. encodedInput .. '&user=' .. userDisplayURI .. '&key=' .. _G.CHATBOTHUB_KEY .. '&history=' .. encodedDisplayName2 .. '&ai=' .. encodedCharacter2 .. '&uid=' .. maxMessageLength .. '&custom=' .. httpRequestUrl2 .. '&model=' .. encodedAiModel2 .. '&lang=' .. _G.CHATBOTHUB_LANGUAGE .. '&long=no&tta=no&version=' .. VERSION)
+
+    if _G.CHATBOTHUB_CHAT_BYPASS then
+        rawApiResponse = translate(rawApiResponse)
+    end
+    if _G.CHATBOTHUB_TTA then
+        ttaResponse = game:HttpGet('https://guerric.pythonanywhere.com/chat?msg=' .. encodedInput .. '&user=' .. userDisplayURI .. '&key=' .. _G.CHATBOTHUB_KEY .. '&history=' .. encodedDisplayName2 .. '&ai=' .. encodedCharacter2 .. '&uid=' .. maxMessageLength .. '&custom=' .. httpRequestUrl2 .. '&model=' .. encodedAiModel2 .. '&lang=' .. _G.CHATBOTHUB_LANGUAGE .. '&long=no&tta=yes&version=' .. VERSION)
+
+        blacklistedContent(ttaResponse)
+    end
+
+    local cleanedResponse = rawApiResponse:gsub('i love you', 'ily'):gsub('wtf', 'wt$'):gsub('zex', 'zesty'):gsub('\n', ' '):gsub('I love you', 'ily'):gsub("I don't know what you're saying. Please teach me.", 'I do not understand, try saying it without emojis and/or special characters.')
+
+    if _G.CHATBOTHUB_KEY == '6gfjlCulKBRmJVYb' then
+        cleanedResponse = cleanedResponse:gsub('[%.,%?:;!"\']', '')
+    end
+    if cleanedResponse ~= '' then
+        formatAiResponse(bypassFilter, userInput2, cleanedResponse)
+        wait()
+
+        local prefixLength2 = not _G.CHATBOTHUB_BOTFORMAT and 0 or 12 + #botPrefix
+        local availableLength = _G.CHATBOTHUB_MAX_MESSAGE_LENGTH - prefixLength2
+        local segmentCount = math.ceil(#cleanedResponse / availableLength)
+        local typingSpeed = _G.CHATBOTHUB_TTA and 1.5 or 1
+
+        _G.CHATBOTHUB_CREDITS = _G.CHATBOTHUB_CREDITS - aiModelCosts[_G.CHATBOTHUB_AI_MODEL] * typingSpeed
+
+        orionLib:MakeNotification({
+            Name = tostring(math.floor(aiModelCosts[_G.CHATBOTHUB_AI_MODEL] * typingSpeed)) .. ' points used',
+            Content = tostring(_G.CHATBOTHUB_CREDITS) .. ' points left',
+            Time = 1,
+        })
+        u101:Set(_G.CHATBOTHUB_CREDITS)
+
+        for segmentIndex = 1, v181 do
+            local segmentStart = (segmentIndex - 1) * availableLength + 1
+            local segmentEnd = math.min(segmentIndex * availableLength, #cleanedResponse)
+            local messageSegment = string.sub(cleanedResponse, segmentStart, segmentEnd)
+            local useBotFormat = _G.CHATBOTHUB_BOTFORMAT
+            local segmentLabel = ' ' .. segmentIndex .. '/' .. segmentCount
+            local segmentSuffix = segmentCount == 1 and '' or segmentLabel
+            local messagePrefix = (not _G.CHATBOTHUB_BOTFORMAT or segmentIndex ~= 1) and '' or '[ChatBot]: ' .. botPrefix .. ', '
+
+            createWindow(messagePrefix .. messageSegment .. segmentSuffix)
+
+            if not _G.CHATBOTHUB_DELAYED_CHAT then
+                sendChatMessage(messagePrefix .. messageSegment .. segmentSuffix)
+            end
+
+            wait(0.1)
+        end
+    end
+end
+
+local playersService2 = game:GetService('Players')
+
+local function onPlayerChatted(player6)
+    print(eventListeners)
+    print(table.concat(eventListeners[player6].buffer, ' '))
+    wait(3)
+
+    if _G.CHATBOTHUB_KEY == '6gfjlCulKBRmJVYb' then
+        wait(7)
+    end
+    if eventListeners[player6] then
+        sendChatMessage2(table.concat(eventListeners[player6].buffer, ' '), player6.DisplayName, localPlayer.UserId, getPlayerDisplayName(player6), player6)
+
+        eventListeners[player6].buffer = {}
+        eventListeners[player6].timerStarted = false
+    end
+end
+
+local eventListeners2 = {}
+local maxRetries = 7
+local playerCharacter = 10
+
+local function sendMessage(key2)
+    local value2 = eventListeners2[key2]
+    local currentTime = tick()
+
+    while#value2 > 0 and playerCharacter < currentTime - value2[1] do
+        table.remove(value2, 1)
+    end
+
+    return maxRetries <= #value2
+end
+local function processChatMessage(message3)
+    if not eventListeners2[message3] then
+        eventListeners2[message3] = {}
+    end
+
+    table.insert(eventListeners2[message3], tick())
+
+    if sendMessage(message3) then
+        print(message3.Name .. ' (' .. message3.DisplayName .. ') is spamming and has been blacklisted!')
+        u102(message3.Name)
+    end
+end
+
+local chatHistory = {}
+local maxHistorySize = 4
+
+formatAiResponse = function(player7, messageText, author)
+    if not chatHistory[player7] then
+        chatHistory[player7] = {}
+    end
+
+    local playerEntry2 = chatHistory[player7]
+    local truncatedMessage = string.sub(messageText, 1, 100)
+    local truncatedAuthor = string.sub(author, 1, 100)
+
+    table.insert(playerEntry2, 'Previous user message: ' .. truncatedMessage)
+    table.insert(playerEntry2, 'Previous AI assistant message: ' .. truncatedAuthor)
+
+    if maxHistorySize < #playerEntry2 then
+        table.remove(playerEntry2, 1)
+    end
+    if maxHistorySize < #playerEntry2 then
+        table.remove(playerEntry2, 1)
+    end
+end
+u127 = function()
+    local playersService3 = playersService2
+    local connectedPlayers, player8, playerIndex = ipairs(playersService3:GetPlayers())
+
+    while true do
+        local aiResponse2
+
+        playerIndex, aiResponse2 = connectedPlayers(player8, playerIndex)
+
+        if playerIndex == nil then
+            break
+        end
+
+        chatHistory[aiResponse2] = {}
+    end
+end
+getPlayerDisplayName = function(userId2)
+    if not chatHistory[userId2] then
+        chatHistory[userId2] = {}
+    end
+
+    return table.concat(chatHistory[userId2], ' --> ')
+end
+
+local function getPlayerByUserId(targetPlayer2)
+    eventListeners[targetPlayer2] = {
+        buffer = {},
+        timerStarted = false,
+    }
+    eventListeners2[targetPlayer2] = {}
+    chatHistory[targetPlayer2] = {}
+end
+
+local playersServiceRef = playersService2
+local onlinePlayers, currentPlayer2, playerId = ipairs(playersService2.GetPlayers(playersServiceRef))
+local orionLibRef = u139
+local orionLibInstance = httpService2
+local orionLibWindow = aiSelection
+local orionLibTab = u101
+local orionLibFolder = u130
+local orionLibButton = getPlayerDisplayName
+local orionLibToggle = sendChatMessage2
+local chatHistoryRef = chatHistory
+local settingsTable = eventListeners2
+local playersServiceGlobal = playersService2
+
+while true do
+    local httpRequestPayload
+
+    playerId, httpRequestPayload = onlinePlayers(currentPlayer2, playerId)
+
+    if playerId == nil then
+        break
+    end
+
+    getPlayerByUserId(httpRequestPayload)
+end
+
+playersServiceGlobal.PlayerAdded:Connect(function(url)
+    getPlayerByUserId(url)
+end)
+playersServiceGlobal.PlayerRemoving:Connect(function(method)
+    eventListeners[method] = nil
+    settingsTable[method] = nil
+    chatHistoryRef[method] = nil
+end)
+
+if not hasAlreadyRun then
+    if chatSystemVersion == 0 then
+        playersServiceGlobal.PlayerChatted:Connect(function(headers, body, successCallback)
+            if _G.CHATBOTHUB_CUSTOMPROMPT and not CHATBOTHUB_PREMIUM then
+                orionLibFolder()
+            end
+            if CHATBOTHUB_LOGIN then
+                if _G.CHATBOTHUB_BLACKLISTED[body.Name] and not _G.CHATBOTHUB_WHITELIST or _G.CHATBOTHUB_WHITELIST and not _G.CHATBOTHUB_BLACKLISTED[body.Name] then
+                    return
+                elseif _G.CHATBOTHUB_CREDITS ~= 0 then
+                    if #successCallback > 1 then
+                        if _G.CHATBOTHUB_ON and ((localPlayer.Character.HumanoidRootPart.Position - body.Character.HumanoidRootPart.Position).magnitude <= _G.CHATBOTHUB_MaxDistance and (body.Name ~= localPlayer.Name and string.sub(successCallback, 1, 1) ~= '#')) then
+                            processChatMessage(body)
+
+                            if _G.CHATBOTHUB_BUFFER then
+                                table.insert(eventListeners[body].buffer, successCallback)
+
+                                if not eventListeners[body].timerStarted then
+                                    eventListeners[body].timerStarted = true
+
+                                    coroutine.wrap(function()
+                                        onPlayerChatted(body)
+                                    end)()
+                                end
+
+                                return
+                            end
+
+                            orionLibToggle(successCallback, body.DisplayName, localPlayer.UserId, orionLibButton(body), body)
+                        end
+                    end
+                else
+                    if _G.CHATBOTHUB_ON then
+                        orionLibTab:Set(0)
+                        orionLib:MakeNotification({
+                            Name = 'Alert',
+                            Content = 'No points left on your account! If you think this is an error, please login again.',
+                            Time = 3,
+                            Image = 'rbxassetid://14895395597',
+                        })
+                    end
+
+                    return
+                end
+            else
+                return
+            end
+        end)
+    else
+        game:GetService('TextChatService').OnIncomingMessage = function(failureCallback)
+            if failureCallback.TextSource then
+                local authorPlayer = playersServiceGlobal:GetPlayerByUserId(failureCallback.TextSource.UserId)
+
+                if authorPlayer then
+                    if failureCallback.Status == Enum.TextChatMessageStatus.Success then
+                        local messageContent2 = failureCallback.Text
+
+                        if _G.CHATBOTHUB_CUSTOMPROMPT and not CHATBOTHUB_PREMIUM then
+                            orionLibFolder()
+                        end
+                        if CHATBOTHUB_LOGIN then
+                            if _G.CHATBOTHUB_BLACKLISTED[authorPlayer.Name] and not _G.CHATBOTHUB_WHITELIST or _G.CHATBOTHUB_WHITELIST and not _G.CHATBOTHUB_BLACKLISTED[authorPlayer.Name] then
+                                return
+                            elseif _G.CHATBOTHUB_CREDITS ~= 0 then
+                                if #messageContent2 > 1 then
+                                    if _G.CHATBOTHUB_ON and ((localPlayer.Character.HumanoidRootPart.Position - authorPlayer.Character.HumanoidRootPart.Position).Magnitude <= _G.CHATBOTHUB_MaxDistance and (authorPlayer.Name ~= localPlayer.Name and string.sub(messageContent2, 1, 1) ~= '#')) then
+                                        processChatMessage(authorPlayer)
+
+                                        if _G.CHATBOTHUB_BUFFER then
+                                            table.insert(eventListeners[authorPlayer].buffer, messageContent2)
+
+                                            if not eventListeners[authorPlayer].timerStarted then
+                                                eventListeners[authorPlayer].timerStarted = true
+
+                                                coroutine.wrap(function()
+                                                    onPlayerChatted(authorPlayer)
+                                                end)()
+                                            end
+
+                                            return
+                                        end
+
+                                        orionLibToggle(messageContent2, authorPlayer.DisplayName, localPlayer.UserId, orionLibButton(authorPlayer), authorPlayer)
+                                    end
+
+                                    return nil
+                                end
+                            elseif _G.CHATBOTHUB_ON then
+                                orionLibTab:Set(0)
+                                orionLib:MakeNotification({
+                                    Name = 'Alert',
+                                    Content = 'No points left on your account! If you think this is an error, please login again.',
+                                    Time = 3,
+                                    Image = 'rbxassetid://14895395597',
+                                })
+                            end
+                        else
+                            return
+                        end
+                    else
+                        return
+                    end
+                else
+                    return
+                end
+            else
+                return
+            end
+        end
+    end
+end
+
+local localPlayer2 = localPlayer
+local pathfindingService = game:GetService('PathfindingService')
+
+local function generateAiResponse(prompt2)
+    local playerHumanoid = localPlayer.Character.Humanoid
+    local playerRootPart2 = localPlayer.Character.HumanoidRootPart
+    local targetPosition = prompt2.Character.HumanoidRootPart.Position
+    local path = pathfindingService:CreatePath()
+
+    local function findPath()
+        path = pathfindingService:CreatePath()
+
+        path:ComputeAsync(playerRootPart2.Position, targetPosition)
+
+        return path:GetWaypoints()
+    end
+
+    local waypoints = findPath()
+    local waypoint, waypointIndex, waypointPosition = pairs(waypoints)
+    local destination = targetPosition
+    local maxDistance = 3
+
+    while true do
+        local moveToWaypoint, moveSuccess = waypoint(waypointIndex, waypointPosition)
+
+        if moveToWaypoint == nil then
+            break
+        end
+
+        waypointPosition = moveToWaypoint
+
+        playerHumanoid:MoveTo(moveSuccess.Position)
+
+        if moveSuccess.Action == Enum.PathWaypointAction.Jump then
+            playerHumanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+
+        local currentPath = nil
+
+        currentPath = playerHumanoid.MoveToFinished:Connect(function(player9)
+            if player9 then
+                if maxDistance < (newDestination - destination).magnitude then
+                    print('Target player moved, recalculating path...')
+
+                    destination = newDestination
+                    waypoints = findPath()
+                    moveToWaypoint = 1
+                end
+
+                currentPath:Disconnect()
+            else
+                warn('Movement interrupted!')
+                currentPath:Disconnect()
+            end
+        end)
+    end
+end
+
+spawn(function()
+    while true do
+        local isAutoMoving, isPremiumUser = pcall(function()
+            if _G.CHATBOTHUB_AUTOMOVING then
+                if CHATBOTHUB_PREMIUM == 0 then
+                    orionLibRef()
+
+                    return
+                end
+                if initCounter > 0 then
+                    initCounter = initCounter - 1
+                else
+                    local players = game:GetService('Players'):GetPlayers()
+
+                    if #players > 0 then
+                        local randomPlayer = players[math.random(1, #players)]
+
+                        while randomPlayer == localPlayer2 or (randomPlayer == localPlayer or (randomPlayer.Character == nil or (localPlayer.Character.HumanoidRootPart.Position - randomPlayer.Character.HumanoidRootPart.Position).magnitude >= _G.CHATBOTHUB_AUTOMOVINGMAXDISTANCE)) do
+                            print(randomPlayer)
+
+                            local allPlayers = game:GetService('Players'):GetPlayers()
+
+                            if #allPlayers > 0 then
+                                randomPlayer = allPlayers[math.random(1, #allPlayers)]
+                            end
+
+                            wait(0.1)
+
+                            _G.CHATBOTHUB_AUTOMOVINGMAXDISTANCE = _G.CHATBOTHUB_AUTOMOVINGMAXDISTANCE + 1
+                        end
+
+                        print('moving to ' .. randomPlayer.Name)
+                        generateAiResponse(randomPlayer)
+                        orionLibToggle('hi', randomPlayer.DisplayName, localPlayer.UserId, orionLibButton(randomPlayer), randomPlayer)
+
+                        localPlayer2 = randomPlayer
+                        _G.CHATBOTHUB_AUTOMOVINGMAXDISTANCE = 30
+                        initCounter = 20
+                    end
+                end
+            end
+        end)
+
+        if not isAutoMoving then
+            warn('An error occurred: ' .. tostring(isPremiumUser))
+        end
+
+        wait(1)
+    end
+end)
+
+local uiButton = Instance.new('TextButton')
+
+uiButton.Size = UDim2.new(0, 70, 0, 40)
+uiButton.Position = UDim2.new(0, 10, 1, -160)
+uiButton.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
+uiButton.TextColor3 = Color3.new(1, 1, 1)
+uiButton.Text = 'Toggle ChatbotHub'
+uiButton.Parent = screenGui
+uiButton.TextWrapped = true
+uiButton.Font = Enum.Font.Code
+
+local uiCorner = Instance.new('UICorner')
+
+uiCorner.CornerRadius = UDim.new(0.2, 0)
+uiCorner.Parent = uiButton
+
+uiButton.MouseButton1Click:Connect(function()
+    orionLib:Switch()
+end)
+
+_G.CHATBOTHUB_LOADED = true
+
+initializeGui()
+updateSettings()
+loadCustomAis()
+orionLibWindow:Refresh(getKeys(_G.CHATBOTHUB_CUSTOMAIS), true)
