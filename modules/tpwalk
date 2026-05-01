@@ -1,0 +1,22 @@
+if not getgenv().tpwalk then
+	getgenv().tpwalk = {
+		_conn = nil,
+		enable = function(self)
+			if self._conn then return end
+			self._conn = game:GetService("RunService").Heartbeat:Connect(function(delta)
+				local char = game.Players.LocalPlayer.Character
+				local hum = char and char:FindFirstChildWhichIsA("Humanoid")
+				if not (char and hum and hum.Parent) then return end
+				if hum.MoveDirection.Magnitude > 0 then
+					char:TranslateBy(hum.MoveDirection * (4 + (getgenv().tpwalks or 0)) * delta * 10)
+				end
+			end)
+		end,
+		disable = function(self)
+			if self._conn then
+				self._conn:Disconnect()
+				self._conn = nil
+			end
+		end
+	}
+end
