@@ -1,0 +1,128 @@
+local a, b, c, d = game:GetService'RunService', game:GetService'UserInputService', game:GetService'ContextActionService', game:GetService'Players'
+local e, f, g, h, i, j, k = d.LocalPlayer, workspace.CurrentCamera, Enum.ContextActionPriority.High.Value, {}
+
+do
+    local l, m, n, o, p, q
+
+    function h.Push()
+        q = f.FieldOfView
+        f.FieldOfView = 70
+        n = f.CameraType
+        f.CameraType = Enum.CameraType.Custom
+        p = f.CFrame
+        o = f.Focus
+        m = b.MouseIconEnabled
+        b.MouseIconEnabled = true
+        l = b.MouseBehavior
+        b.MouseBehavior = Enum.MouseBehavior.Default
+    end
+    function h.Pop()
+        f.FieldOfView = q or 70
+        f.CameraType = n or Enum.CameraType.Custom
+        f.CFrame = p or f.CFrame
+        f.Focus = o or f.Focus
+        b.MouseIconEnabled = if m ~= nil then m else true
+        b.MouseBehavior = l or Enum.MouseBehavior.Default
+        l, m, n, o, p, q = nil, nil, nil, nil, nil, nil
+    end
+end
+
+local l = {}
+
+do
+    local m, n, o, p, q, r, s = {
+        W = 0,
+        A = 0,
+        S = 0,
+        D = 0,
+        E = 0,
+        Q = 0,
+        Up = 0,
+        Down = 0,
+    }, {
+        Delta = Vector2.zero,
+    }, Vector3.one, Vector2.one * (math.pi / 64), 0.75, 0.25, 1
+
+    function l.Vel(t)
+        s = math.clamp(s + t * (m.Up - m.Down) * q, 0.01, 4)
+
+        local u = Vector3.new(m.D - m.A, m.E - m.Q, m.S - m.W) * o
+
+        return u * (s * (b:IsKeyDown(Enum.KeyCode.LeftShift) and r or 1))
+    end
+    function l.Pan()
+        local t = n.Delta * p
+
+        n.Delta = Vector2.zero
+
+        return t
+    end
+
+    local function onKey(t, u, v)
+        m[v.KeyCode.Name] = u == Enum.UserInputState.Begin and 1 or 0
+
+        return Enum.ContextActionResult.Sink
+    end
+    local function onMousePan(t, u, v)
+        local w = v.Delta
+
+        n.Delta = Vector2.new(-w.Y, -w.X)
+
+        return Enum.ContextActionResult.Sink
+    end
+    local function zero(t)
+        for u, v in t do
+            t[u] = v * 0
+        end
+    end
+
+    function l.StartCapture()
+        c:BindActionAtPriority('FreecamKeyboard', onKey, false, g, Enum.KeyCode.W, Enum.KeyCode.A, Enum.KeyCode.S, Enum.KeyCode.D, Enum.KeyCode.E, Enum.KeyCode.Q, Enum.KeyCode.Up, Enum.KeyCode.Down)
+        c:BindActionAtPriority('FreecamMousePan', onMousePan, false, g, Enum.UserInputType.MouseMovement)
+    end
+    function l.StopCapture()
+        s = 1
+
+        zero(m)
+        zero(n)
+        c:UnbindAction'FreecamKeyboard'
+        c:UnbindAction'FreecamMousePan'
+    end
+end
+
+local function stopFreecam()
+    l.StopCapture()
+    a:UnbindFromRenderStep'Freecam'
+    h.Pop()
+end
+local function unview()
+    if i ~= nil then
+        i = nil
+    end
+    if j then
+        j:Disconnect()
+        k:Disconnect()
+
+        j = nil
+        k = nil
+    end
+end
+local function fixcam()
+    stopFreecam()
+    unview()
+    f:Destroy()
+    task.wait(0.1)
+
+    repeat
+        task.wait()
+    until e.Character ~= nil
+
+    workspace.CurrentCamera.CameraSubject = e.Character:FindFirstChildWhichIsA'Humanoid'
+    workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
+    e.CameraMinZoomDistance = 0.5
+    e.CameraMaxZoomDistance = 400
+    e.CameraMode = Enum.CameraMode.Classic
+    e.Character.Head.Anchored = false
+end
+
+fixcam()
